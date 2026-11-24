@@ -28,34 +28,39 @@ class AppRoutes {
       name: root,
       page: () => const RootPage(),
       transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     ),
     // Layar login pertama kali (bisa dilewati)
     GetPage(
       name: welcome,
       page: () => const LoginPage(isWelcome: true),
       transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     ),
     GetPage(
       name: ticketDetail,
       page: () => const TicketDetailPage(),
       transition: Transition.rightToLeftWithFade,
-      transitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
     ),
     // Login dari tombol BUY (bisa ditutup)
     GetPage(
       name: login,
       page: () => const LoginPage(),
       transition: Transition.downToUp,
-      transitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
     ),
     GetPage(
       name: checkout,
       page: () => const CheckoutPage(),
       middlewares: [AuthMiddleware()],
       transition: Transition.rightToLeftWithFade,
-      transitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
     ),
   ];
 }

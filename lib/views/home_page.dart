@@ -4,10 +4,21 @@ import '../controllers/home_controller.dart';
 import '../controllers/ticket_controller.dart';
 import '../widgets/video_bg.dart';
 import '../widgets/ticket_card.dart';
+import '../widgets/motion.dart';
+import '../widgets/segmented_filter.dart';
+import '../models/ticket_package.dart';
 import '../theme.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  static const List<String> _categoryKeys = [
+    'all',
+    'grandstand',
+    'walkabout',
+    'hospitality',
+  ];
+  static const List<String> _categoryLabels = ['All', 'Stands', 'Walk', 'VIP'];
 
   @override
   Widget build(BuildContext context) {
@@ -21,129 +32,99 @@ class HomePage extends StatelessWidget {
           ticketCtrl.loadTickets();
         },
         color: AppTheme.f1Red,
+        backgroundColor: AppTheme.surfaceBg,
         child: SingleChildScrollView(
           controller: homeCtrl.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Hero Banner / Video Background
-              const VideoBgHero(),
-
-              const SizedBox(height: 16),
-
-              // 2. Weather & Air Quality Card (Open-Meteo API)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildWeatherAndHazeCard(homeCtrl),
+              // 1. Hero (video + hitung mundur + cuaca), bergeser pelan saat scroll
+              AnimatedBuilder(
+                animation: homeCtrl.scrollController,
+                child: const VideoBgHero(),
+                builder: (context, child) {
+                  final c = homeCtrl.scrollController;
+                  final off = c.hasClients ? c.offset.clamp(0.0, 400.0) : 0.0;
+                  return ClipRect(
+                    child: Transform.translate(
+                      offset: Offset(0, off * 0.25),
+                      child: child,
+                    ),
+                  );
+                },
               ),
 
-              const SizedBox(height: 24),
-
-              // 3. Ticket Carousel Section
-              Padding(
-                key: homeCtrl.carouselKey,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'OFFICIAL TICKETS',
-                          style: TextStyle(
-                            color: AppTheme.f1Red,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Grandstand & Packages',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Obx(() => Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.cardBorder),
-                          ),
-                          child: Text(
-                            '${ticketCtrl.filteredTickets.length} Options',
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        )),
-                  ],
+              // 2. Judul section + jumlah pilihan
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 100),
+                child: Padding(
+                  key: homeCtrl.carouselKey,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const Text(
+                    'Pick Your Seat',
+                    style: AppText.h2,
+                  ),
                 ),
               ),
-
               const SizedBox(height: 12),
 
-              // Category Filter Pills
-              _buildCategoryFilters(ticketCtrl),
+              // 3. Filter geser
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 160),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Obx(() {
+                    final idx = _categoryKeys
+                        .indexOf(ticketCtrl.selectedCategory.value);
+                    return SegmentedFilter(
+                      labels: _categoryLabels,
+                      selectedIndex: idx < 0 ? 0 : idx,
+                      onChanged: (i) => ticketCtrl.setCategory(_categoryKeys[i]),
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(height: 10),
 
-              const SizedBox(height: 12),
-
-              // Horizontal Ticket Carousel ("Entertainment Highlights" style)
+              // 4. Carousel tiket (kartu aktif membesar, tetangganya mengecil)
               SizedBox(
                 height: 330,
                 child: Obx(() {
-                  final list = ticketCtrl.filteredTickets;
-                  if (list.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No tickets found in this category.',
-                        style: TextStyle(color: AppTheme.textMuted),
-                      ),
-                    );
-                  }
+                  final list = ticketCtrl.filteredTickets.toList();
+                  final cat = ticketCtrl.selectedCategory.value;
 
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      final item = list[index];
-                      return TicketCard(
-                        ticket: item,
-                        isHorizontalCard: true,
-                        onTap: () {
-                          // Tap card -> navigates to "02 Detail - Overview"
-                          ticketCtrl.selectTicket(item);
-                          Get.toNamed('/ticket-detail', arguments: item);
-                        },
-                        onMorePressed: () {
-                          // MORE button -> navigates to "02 Detail - Overview"
-                          ticketCtrl.selectTicket(item);
-                          Get.toNamed('/ticket-detail', arguments: item);
-                        },
-                      );
-                    },
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: list.isEmpty
+                        ? const Center(
+                            key: ValueKey('empty'),
+                            child: Text(
+                              'No tickets in this category yet.',
+                              style: TextStyle(color: AppTheme.textMuted),
+                            ),
+                          )
+                        : _TicketCarousel(
+                            key: ValueKey(cat),
+                            items: list,
+                            onOpen: (item) {
+                              ticketCtrl.selectTicket(item);
+                              Get.toNamed('/ticket-detail', arguments: item);
+                            },
+                          ),
                   );
                 }),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // Circuit Highlights & Race Schedule Info
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildCircuitInfoSection(),
+              // 5. Jadwal race weekend (timeline)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 260),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildSchedule(homeCtrl),
+                ),
               ),
 
               const SizedBox(height: 40),
@@ -154,232 +135,223 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildWeatherAndHazeCard(HomeController homeCtrl) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: Obx(() {
-        if (homeCtrl.isLoadingWeather.value) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppTheme.f1Red),
-                  ),
-                  SizedBox(width: 10),
-                  Text('Loading Marina Bay live weather...',
-                      style:
-                          TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                ],
-              ),
-            ),
-          );
-        }
+  Widget _buildSchedule(HomeController homeCtrl) {
+    const rows = [
+      ['Fri 8 Oct', 'Practice 1 & 2', '17:30 & 21:00 SGT'],
+      ['Sat 9 Oct', 'Practice 3 & Qualifying', '17:30 & 21:00 SGT'],
+      ['Sun 10 Oct', 'Singapore Grand Prix · 62 laps', '20:00 SGT'],
+    ];
 
-        final w = homeCtrl.weather.value;
-        final aq = homeCtrl.airQuality.value;
-
-        return Column(
-          children: [
-            Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Race Weekend',
+          style: AppText.h2,
+        ),
+        const SizedBox(height: 12),
+        _buildWeatherStrip(homeCtrl),
+        const SizedBox(height: 18),
+        for (int i = 0; i < rows.length; i++)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(w?.icon ?? '☀️',
-                      style: const TextStyle(fontSize: 22)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
+                SizedBox(
+                  width: 24,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Marina Bay Track Weather',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(top: 3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.f1Red,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${w?.temperature.toStringAsFixed(1) ?? '29.0'}°C • ${w?.description ?? 'Clear Sky'}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                      if (i != rows.length - 1)
+                        Expanded(
+                          child: Container(
+                            width: 1,
+                            margin: const EdgeInsets.only(top: 6),
+                            color: AppTheme.cardBorder,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.success.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border:
-                        Border.all(color: AppTheme.success.withOpacity(0.4)),
-                  ),
-                  child: const Text(
-                    'LIVE SGT',
-                    style: TextStyle(
-                      color: AppTheme.success,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(color: AppTheme.cardBorder, height: 1),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.air, size: 16, color: AppTheme.gold),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'Air Quality: PM2.5 ${aq?.pm25.toStringAsFixed(1) ?? '12.0'} µg/m³ • ${aq?.qualityStatus ?? 'Good'}',
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        bottom: i == rows.length - 1 ? 0 : 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${rows[i][0]} · ${rows[i][1]}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          rows[i][2],
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-          ],
-        );
-      }),
+          ),
+      ],
     );
   }
 
-  Widget _buildCategoryFilters(TicketController ticketCtrl) {
-    const categories = [
-      {'key': 'all', 'label': 'All Tickets'},
-      {'key': 'grandstand', 'label': 'Grandstand'},
-      {'key': 'walkabout', 'label': 'Walkabout'},
-      {'key': 'hospitality', 'label': 'VIP Hospitality'},
-    ];
+  /// Cuaca trek, ditaruh ringkas di section Race Weekend (bukan di hero).
+  Widget _buildWeatherStrip(HomeController homeCtrl) {
+    return Obx(() {
+      final loading = homeCtrl.isLoadingWeather.value;
+      final w = homeCtrl.weather.value;
+      final aq = homeCtrl.airQuality.value;
 
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final cat = categories[index];
-          return Obx(() {
-            final isSelected = ticketCtrl.selectedCategory.value == cat['key'];
-            return ChoiceChip(
-              label: Text(cat['label']!),
-              selected: isSelected,
-              onSelected: (_) => ticketCtrl.setCategory(cat['key']!),
-              selectedColor: AppTheme.f1Red,
-              backgroundColor: AppTheme.cardBg,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppTheme.textMuted,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              side: BorderSide(
-                color: isSelected ? AppTheme.f1Red : AppTheme.cardBorder,
-              ),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              showCheckmark: false,
-            );
-          });
-        },
-      ),
-    );
-  }
+      final airNote = (aq != null &&
+              !aq.qualityStatus.toLowerCase().contains('good'))
+          ? ' · Air Quality: ${aq.qualityStatus}'
+          : '';
+      final text = loading
+          ? 'Checking Marina Bay weather…'
+          : 'Marina Bay · ${w?.temperature.toStringAsFixed(0) ?? '--'}° ${w?.description ?? ''}$airNote';
 
-  Widget _buildCircuitInfoSection() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.flag_rounded, color: AppTheme.f1Red, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Race Weekend Schedule',
+      final row = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.wb_sunny_rounded, size: 18, color: AppTheme.gold),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text.trim(),
+                style: AppText.caption.copyWith(color: Colors.white),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (!loading) ...[
+              const SizedBox(width: 8),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: AppTheme.success,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                'Live',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+                  color: AppTheme.success,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          _buildScheduleRow(
-              'Friday, 8 Oct', 'Practice 1 & 2', '17:30 & 21:00 SGT'),
-          const Divider(color: AppTheme.cardBorder, height: 16),
-          _buildScheduleRow('Saturday, 9 Oct', 'Practice 3 & Qualifying',
-              '17:30 & 21:00 SGT'),
-          const Divider(color: AppTheme.cardBorder, height: 16),
-          _buildScheduleRow(
-              'Sunday, 10 Oct', 'Singapore Grand Prix (62 Laps)', '20:00 SGT'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleRow(String day, String event, String time) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              day,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold),
-            ),
-            Text(
-              event,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-            ),
           ],
         ),
-        Text(
-          time,
-          style: const TextStyle(
-              color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w600),
-        ),
-      ],
+      );
+
+      return loading ? Pulse(child: row) : row;
+    });
+  }
+}
+
+class _TicketCarousel extends StatefulWidget {
+  final List<TicketPackage> items;
+  final void Function(TicketPackage) onOpen;
+
+  const _TicketCarousel({super.key, required this.items, required this.onOpen});
+
+  @override
+  State<_TicketCarousel> createState() => _TicketCarouselState();
+}
+
+class _TicketCarouselState extends State<_TicketCarousel> {
+  late final PageController _controller =
+      PageController(viewportFraction: 0.74);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 9),
+      child: PageView.builder(
+      controller: _controller,
+      physics: const BouncingScrollPhysics(),
+      padEnds: false,
+      clipBehavior: Clip.none,
+      itemCount: widget.items.length,
+      itemBuilder: (context, index) {
+        final item = widget.items[index];
+
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            double page = 0;
+            if (_controller.hasClients &&
+                _controller.position.haveDimensions) {
+              page = _controller.page ?? 0;
+            }
+            final d = (page - index).abs().clamp(0.0, 1.0);
+            return Transform.scale(
+              scale: 1 - 0.07 * d,
+              alignment: Alignment.topCenter,
+              child: Opacity(opacity: 1 - 0.25 * d, child: child),
+            );
+          },
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
+              child: FadeSlideIn(
+                key: ValueKey(item.id),
+                delay: Duration(milliseconds: 60 * (index < 3 ? index : 3)),
+                offsetY: 20,
+                child: TicketCard(
+                  ticket: item,
+                  fillWidth: true,
+                  heroTag: 'ticket-img-${item.id}',
+                  onTap: () => widget.onOpen(item),
+                  onMorePressed: () => widget.onOpen(item),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
     );
   }
 }

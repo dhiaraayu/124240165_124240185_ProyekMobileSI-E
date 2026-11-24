@@ -5,7 +5,9 @@ import '../controllers/ticket_controller.dart';
 import '../controllers/currency_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/currency_selector.dart';
+import '../widgets/segmented_filter.dart';
 import '../theme.dart';
+import '../widgets/motion.dart';
 
 class TicketDetailPage extends StatefulWidget {
   const TicketDetailPage({super.key});
@@ -14,16 +16,14 @@ class TicketDetailPage extends StatefulWidget {
   State<TicketDetailPage> createState() => _TicketDetailPageState();
 }
 
-class _TicketDetailPageState extends State<TicketDetailPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _TicketDetailPageState extends State<TicketDetailPage> {
   late TicketPackage _ticket;
   bool _invalidTicket = false;
+  int _tab = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     final ticketCtrl = Get.find<TicketController>();
     final arg = Get.arguments;
     if (arg is TicketPackage) {
@@ -35,12 +35,6 @@ class _TicketDetailPageState extends State<TicketDetailPage>
     } else {
       _invalidTicket = true;
     }
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   void _onBuyPressed() {
@@ -57,7 +51,7 @@ class _TicketDetailPageState extends State<TicketDetailPage>
       return;
     }
 
-    // Guest Flow: BUY -> "04 Masuk / Daftar" -> "05 Checkout"
+    // Guest flow: Buy -> Sign In / Register -> Checkout
     authCtrl.requireLogin(
       message: 'Please sign in or register to complete your booking.',
       onSuccess: () {
@@ -65,6 +59,24 @@ class _TicketDetailPageState extends State<TicketDetailPage>
       },
     );
   }
+
+  IconData get _categoryIcon {
+    switch (_ticket.category) {
+      case 'hospitality':
+        return Icons.workspace_premium_rounded;
+      case 'walkabout':
+        return Icons.directions_walk_rounded;
+      default:
+        return Icons.event_seat_rounded;
+    }
+  }
+
+  String get _categoryLabel => _ticket.category.isEmpty
+      ? ''
+      : _ticket.category[0].toUpperCase() + _ticket.category.substring(1);
+
+  Color _urgencyColor(int r) =>
+      r <= 5 ? AppTheme.f1Red : (r <= 20 ? AppTheme.gold : AppTheme.success);
 
   @override
   Widget build(BuildContext context) {
@@ -84,36 +96,96 @@ class _TicketDetailPageState extends State<TicketDetailPage>
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          _ticket.name,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        backgroundColor: Colors.transparent,
+        leadingWidth: 58,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14, top: 8, bottom: 8),
+          child: _CircleButton(
+            icon: Icons.arrow_back_rounded,
+            onTap: () => Get.back(),
+          ),
         ),
         actions: [
           Obx(() {
             final isWish = ticketCtrl.isWishlisted(_ticket.id);
-            return IconButton(
-              icon: Icon(
-                isWish ? Icons.favorite : Icons.favorite_border,
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: _CircleButton(
+                icon: isWish ? Icons.favorite : Icons.favorite_border,
                 color: isWish ? AppTheme.f1Red : Colors.white,
+                onTap: () => ticketCtrl.toggleWishlist(_ticket.id),
               ),
-              onPressed: () => ticketCtrl.toggleWishlist(_ticket.id),
             );
           }),
+          const SizedBox(width: 8),
           const Padding(
-            padding: EdgeInsets.only(right: 12),
+            padding: EdgeInsets.only(right: 14),
             child: CurrencySelector(isCompact: true),
           ),
         ],
       ),
-      body: Column(
+      body: FadeSlideIn(
+        offsetY: 0,
+        duration: const Duration(milliseconds: 380),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_ticket.name, style: AppText.h1),
+                          const SizedBox(height: 4),
+                          Text(_ticket.location, style: AppText.caption),
+                          const SizedBox(height: 14),
+                          _buildPriceRow(currencyCtrl),
+                          const SizedBox(height: 18),
+                          SegmentedFilter(
+                            labels: const ['Overview', 'Pricing Details'],
+                            selectedIndex: _tab,
+                            onChanged: (i) => setState(() => _tab = i),
+                          ),
+                          const SizedBox(height: 18),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: KeyedSubtree(
+                              key: ValueKey(_tab),
+                              child: _tab == 0
+                                  ? _buildOverviewTab()
+                                  : _buildPricingDetailsTab(currencyCtrl),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            _buildBottomBar(currencyCtrl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return SizedBox(
+      height: 280,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          // Hero Ticket Photo Banner
-          SizedBox(
-            height: 160,
-            width: double.infinity,
+          Hero(
+            tag: 'ticket-img-${_ticket.id}',
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -121,20 +193,32 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                   _ticket.effectiveImageAsset,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    color: AppTheme.cardBg,
-                    child: const Center(
-                      child: Icon(Icons.confirmation_number_outlined,
-                          size: 48, color: AppTheme.f1Red),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF3B2A55), Color(0xFF1F2133)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Align(
+                      alignment: const Alignment(0.7, -0.1),
+                      child: Icon(
+                        _categoryIcon,
+                        size: 110,
+                        color: Colors.white.withOpacity(0.12),
+                      ),
                     ),
                   ),
                 ),
-                Container(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withOpacity(0.2),
-                        AppTheme.cardBg.withOpacity(0.95),
+                        Colors.black.withOpacity(0.4),
+                        Colors.transparent,
+                        AppTheme.darkBg,
                       ],
+                      stops: const [0.0, 0.45, 1.0],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -143,245 +227,196 @@ class _TicketDetailPageState extends State<TicketDetailPage>
               ],
             ),
           ),
-
-          // Header Details & Badge Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(
-              color: AppTheme.cardBg,
-              border: Border(bottom: BorderSide(color: AppTheme.cardBorder)),
-            ),
+          Positioned(
+            left: 20,
+            bottom: 38,
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceBg,
-                      border: Border.all(color: AppTheme.cardBorder),
-                    ),
-                    child: Image.asset(
-                      _ticket.effectiveImageAsset,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        _ticket.category == 'hospitality'
-                            ? Icons.hotel_class_rounded
-                            : (_ticket.category == 'walkabout'
-                                ? Icons.directions_walk_rounded
-                                : Icons.stadium_rounded),
-                        color: AppTheme.f1Red,
-                        size: 28,
-                      ),
-                    ),
-                  ),
+                _pill(
+                  _ticket.isAvailable ? 'Available' : 'Sold Out',
+                  _ticket.isAvailable
+                      ? AppTheme.success.withOpacity(0.2)
+                      : AppTheme.soldOut.withOpacity(0.25),
+                  _ticket.isAvailable ? AppTheme.success : Colors.white70,
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _ticket.isAvailable
-                                  ? AppTheme.success.withOpacity(0.2)
-                                  : AppTheme.soldOut.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: _ticket.isAvailable
-                                    ? AppTheme.success
-                                    : AppTheme.soldOut,
-                              ),
-                            ),
-                            child: Text(
-                              _ticket.isAvailable ? 'AVAILABLE' : 'SOLD OUT',
-                              style: TextStyle(
-                                color: _ticket.isAvailable
-                                    ? AppTheme.success
-                                    : AppTheme.soldOut,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceBg,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _ticket.category.toUpperCase(),
-                              style: const TextStyle(
-                                color: AppTheme.gold,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Obx(() => Text(
-                            (_ticket.startingPrice == null
-                                ? 'Not Available'
-                                : currencyCtrl
-                                    .formatPrice(_ticket.startingPrice!)),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          )),
-                      Obx(() {
-                        if (_ticket.startingPrice == null)
-                          return const SizedBox.shrink();
-                        final equiv = currencyCtrl
-                            .formatSgdEquivalent(_ticket.startingPrice!);
-                        if (equiv.isEmpty) return const SizedBox.shrink();
-                        return Text(
-                          equiv,
-                          style: const TextStyle(
-                              color: AppTheme.textMuted, fontSize: 11),
-                        );
-                      }),
-                    ],
-                  ),
+                const SizedBox(width: 6),
+                _pill(
+                  _categoryLabel,
+                  Colors.white.withOpacity(0.14),
+                  Colors.white,
                 ),
               ],
             ),
           ),
-
-          // Two Tabs: 02 Overview & 03 Pricing Details
-          Container(
-            color: AppTheme.cardBg,
-            child: TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: '02 Overview'),
-                Tab(text: '03 Pricing Details'),
-              ],
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 22,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: AppTheme.darkBg,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+              ),
             ),
           ),
-
-          // TabBarView Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // TAB 02: Overview
-                _buildOverviewTab(),
-
-                // TAB 03: Pricing Details
-                _buildPricingDetailsTab(currencyCtrl),
-              ],
-            ),
-          ),
-
-          // Bottom Bar with BUY Button
-          _buildBottomBar(currencyCtrl),
         ],
       ),
+    );
+  }
+
+  Widget _pill(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(CurrencyController currencyCtrl) {
+    final remaining = _ticket.isAvailable ? _ticket.remaining : null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: _ticket.startingPrice == null
+              ? const Text(
+                  'Not Available',
+                  style: TextStyle(
+                    color: AppTheme.soldOut,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('From', style: AppText.caption),
+                    Obx(() => Text(
+                          currencyCtrl.formatPrice(_ticket.startingPrice!),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
+                        )),
+                    Obx(() {
+                      final equiv = currencyCtrl
+                          .formatSgdEquivalent(_ticket.startingPrice!);
+                      if (equiv.isEmpty) return const SizedBox.shrink();
+                      return Text(equiv, style: AppText.caption);
+                    }),
+                  ],
+                ),
+        ),
+        if (remaining != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: _urgencyColor(remaining).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$remaining left',
+              style: TextStyle(
+                color: _urgencyColor(remaining),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildOverviewTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Key Specs Grid
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.cardBorder),
-            ),
-            child: Column(
-              children: [
-                _buildSpecItem(Icons.grid_view_rounded, 'Access Zones',
-                    'Zone ${_ticket.zoneAccess}'),
-                const Divider(color: AppTheme.cardBorder, height: 16),
-                _buildSpecItem(Icons.door_front_door_outlined,
-                    'Preferred Gates', 'Gate ${_ticket.gates}'),
-                const Divider(color: AppTheme.cardBorder, height: 16),
-                _buildSpecItem(
-                    Icons.place_outlined, 'Track Location', _ticket.location),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _infoTile(Icons.grid_view_rounded, 'Access Zones',
+                  'Zone ${_ticket.zoneAccess}'),
+              const SizedBox(width: 8),
+              _infoTile(Icons.door_front_door_outlined, 'Preferred Gates',
+                  'Gate ${_ticket.gates}'),
+              const SizedBox(width: 8),
+              _infoTile(
+                  Icons.place_outlined, 'Track Location', _ticket.location),
+            ],
           ),
-
-          const SizedBox(height: 20),
-
-          // Description
-          const Text(
-            'About This Package',
-            style: TextStyle(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _ticket.description,
-            style: const TextStyle(
-                color: AppTheme.textMuted, fontSize: 14, height: 1.5),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Benefits / Overview List
-          const Text(
-            'Package Benefits & Inclusions',
-            style: TextStyle(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          ..._ticket.overview.map((benefit) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.success, size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        benefit,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13, height: 1.4),
-                      ),
+        ),
+        const SizedBox(height: 24),
+        const Text('About This Package', style: AppText.h2),
+        const SizedBox(height: 8),
+        Text(
+          _ticket.description,
+          style: const TextStyle(
+              color: AppTheme.textMuted, fontSize: 14, height: 1.5),
+        ),
+        const SizedBox(height: 24),
+        const Text("What's Included", style: AppText.h2),
+        const SizedBox(height: 12),
+        ..._ticket.overview.map((benefit) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle_rounded,
+                      color: AppTheme.success, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      benefit,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 13, height: 1.4),
                     ),
-                  ],
-                ),
-              )),
-          const SizedBox(height: 20),
-        ],
-      ),
+                  ),
+                ],
+              ),
+            )),
+      ],
     );
   }
 
-  Widget _buildSpecItem(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppTheme.f1Red),
-        const SizedBox(width: 12),
-        Text(label,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-        const Spacer(),
-        Text(value,
-            style: const TextStyle(
+  Widget _infoTile(IconData icon, String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: AppTheme.f1Red),
+            const SizedBox(height: 8),
+            Text(label, style: AppText.caption),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,
-                fontWeight: FontWeight.bold)),
-      ],
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -393,49 +428,41 @@ class _TicketDetailPageState extends State<TicketDetailPage>
       {'name': 'Sunday Pass', 'price': _ticket.priceSun},
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Session Breakdown & Pricing',
-            style: TextStyle(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Prices shown in your active currency. Subject to availability.',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-          ),
-          const SizedBox(height: 16),
-          ...days.map((item) {
-            final dayName = item['name'] as String;
-            final price = item['price'] as double?;
-            final isAvailable = price != null && price > 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Session Breakdown & Pricing', style: AppText.h2),
+        const SizedBox(height: 6),
+        const Text(
+          'Prices shown in your active currency. Subject to availability.',
+          style: AppText.caption,
+        ),
+        const SizedBox(height: 16),
+        ...days.map((item) {
+          final dayName = item['name'] as String;
+          final price = item['price'] as double?;
+          final isAvailable = price != null && price > 0;
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.cardBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isAvailable ? AppTheme.cardBorder : Colors.transparent,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBg,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         dayName,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: isAvailable ? Colors.white : AppTheme.soldOut,
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -443,69 +470,78 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                         isAvailable
                             ? 'Grandstand reserved seat'
                             : 'Not offered for single day',
-                        style: const TextStyle(
-                            color: AppTheme.textMuted, fontSize: 11),
+                        style: AppText.caption,
                       ),
                     ],
                   ),
-                  Obx(() {
-                    if (!isAvailable) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceBg,
-                          borderRadius: BorderRadius.circular(6),
+                ),
+                Obx(() {
+                  if (!isAvailable) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Not Available',
+                        style: TextStyle(
+                          color: AppTheme.soldOut,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
-                        child: const Text(
-                          'Not Available',
-                          style: TextStyle(
-                            color: AppTheme.soldOut,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          currencyCtrl.formatPrice(price),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          currencyCtrl.formatSgdEquivalent(price),
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
+                      ),
                     );
-                  }),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        currencyCtrl.formatPrice(price),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        currencyCtrl.formatSgdEquivalent(price),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
   Widget _buildBottomBar(CurrencyController currencyCtrl) {
+    final canBuy = _ticket.isAvailable && _ticket.availableDays.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        border: Border(top: BorderSide(color: AppTheme.cardBorder)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
+        top: false,
         child: Row(
           children: [
             Expanded(
@@ -513,51 +549,82 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('From',
-                      style:
-                          TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-                  Obx(() => Text(
-                        (_ticket.startingPrice == null
-                            ? 'Not Available'
-                            : currencyCtrl.formatPrice(_ticket.startingPrice!)),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      )),
+                  const Text('From', style: AppText.caption),
+                  _ticket.startingPrice == null
+                      ? const Text(
+                          'Not Available',
+                          style: TextStyle(
+                            color: AppTheme.soldOut,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                      : Obx(() => Text(
+                            currencyCtrl.formatPrice(_ticket.startingPrice!),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )),
                 ],
               ),
             ),
-            SizedBox(
-              width: 170,
-              height: 48,
-              child: ElevatedButton(
-                onPressed:
-                    (_ticket.isAvailable && _ticket.availableDays.isNotEmpty)
-                        ? _onBuyPressed
-                        : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.f1Red,
-                  disabledBackgroundColor: AppTheme.soldOut.withOpacity(0.4),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  !_ticket.isAvailable
-                      ? 'SOLD OUT'
-                      : (_ticket.availableDays.isEmpty
-                          ? 'NOT AVAILABLE'
-                          : 'BUY NOW'),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
+            Pressable(
+              child: SizedBox(
+                width: 170,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: canBuy ? _onBuyPressed : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.f1Red,
+                    disabledBackgroundColor: AppTheme.soldOut.withOpacity(0.4),
+                    shape: const StadiumBorder(),
+                  ),
+                  child: Text(
+                    !_ticket.isAvailable
+                        ? 'Sold Out'
+                        : (_ticket.availableDays.isEmpty
+                            ? 'Not Available'
+                            : 'Buy Now'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.color = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.darkBg.withOpacity(0.55),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(icon, size: 19, color: color),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import '../controllers/ticket_controller.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
 import 'favorites_page.dart';
+import '../widgets/motion.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -34,7 +35,7 @@ class ProfilePage extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text(
-              'CANCEL',
+              'Cancel',
               style: TextStyle(color: AppTheme.textMuted),
             ),
           ),
@@ -47,7 +48,7 @@ class ProfilePage extends StatelessWidget {
               authCtrl.logout();
             },
             child: const Text(
-              'LOG OUT',
+              'Log Out',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -70,267 +71,219 @@ class ProfilePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.darkBg,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Obx(() {
-          final isLoggedIn = authCtrl.isLoggedIn.value;
-          final userName = authCtrl.currentUserName.value;
-          final userEmail = authCtrl.currentUserEmail.value;
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Obx(() {
+            final isLoggedIn = authCtrl.isLoggedIn.value;
+            final userName = authCtrl.currentUserName.value;
+            final userEmail = authCtrl.currentUserEmail.value;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // PROFILE HEADER
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.f1Red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          isLoggedIn && userName.isNotEmpty
-                              ? userName[0].toUpperCase()
-                              : 'G',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isLoggedIn ? userName : 'Guest User',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isLoggedIn
-                                ? userEmail
-                                : 'Sign in to manage your tickets',
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            final activeOrders =
+                orderCtrl.orders.where((o) => o.status != 'cancelled').toList();
+            final ticketCount =
+                activeOrders.fold<int>(0, (sum, o) => sum + o.quantity);
 
-              const SizedBox(height: 20),
-
-              if (!isLoggedIn)
-                AppButton(
-                  text: 'SIGN IN / SIGN UP',
-                  onPressed: () => Get.toNamed('/login'),
-                ),
-
-              if (isLoggedIn) ...[
-                // ACCOUNT STATISTICS
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.cardBorder),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderCard(isLoggedIn, userName, userEmail),
+                const SizedBox(height: 12),
+                if (!isLoggedIn)
+                  AppButton(
+                    text: 'Sign In / Sign Up',
+                    onPressed: () => Get.toNamed('/login'),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                if (isLoggedIn) ...[
+                  Row(
                     children: [
-                      _buildStatItem(
-                        'ORDERS',
-                        '${orderCtrl.orders.where((o) => o.status != 'cancelled').length}',
-                      ),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: AppTheme.cardBorder,
-                      ),
-                      _buildStatItem(
-                        'TICKETS',
-                        '${orderCtrl.orders.fold<int>(
-                          0,
-                          (sum, item) =>
-                              sum +
-                              (item.status == 'cancelled' ? 0 : item.quantity),
-                        )}',
-                      ),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: AppTheme.cardBorder,
-                      ),
-                      _buildStatItem('SEASON', '2027'),
+                      Expanded(
+                          child: _buildStatItem(
+                              'Orders', '${activeOrders.length}')),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: _buildStatItem('Tickets', '$ticketCount')),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildStatItem('Season', '2027')),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ACCOUNT OVERVIEW
-                const Text(
-                  'ACCOUNT OVERVIEW',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                  const SizedBox(height: 26),
+                  const Text('Account Overview', style: AppText.h2),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildAccountInfo(
+                          icon: Icons.person_outline_rounded,
+                          label: 'Account Name',
+                          value: userName,
+                        ),
+                        const Divider(color: AppTheme.cardBorder, height: 1),
+                        _buildAccountInfo(
+                          icon: Icons.email_outlined,
+                          label: 'Email Address',
+                          value: userEmail,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-
+                ],
+                const SizedBox(height: 26),
+                const Text('My Collection', style: AppText.h2),
                 const SizedBox(height: 10),
+                _buildMenuItem(
+                  icon: Icons.favorite_rounded,
+                  title: 'Favorite Tickets',
+                  subtitle: 'View your saved tickets',
+                  iconColor: AppTheme.f1Red,
+                  onTap: _openFavorites,
+                ),
+                if (isLoggedIn) ...[
+                  const SizedBox(height: 28),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showLogoutDialog(context, authCtrl),
+                      icon: const Icon(Icons.logout_rounded,
+                          color: Color(0xFFFF6B66), size: 18),
+                      label: const Text(
+                        'Log Out',
+                        style: TextStyle(
+                          color: Color(0xFFFF6B66),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 40),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
 
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.cardBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildAccountInfo(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Account Name',
-                        value: userName,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(
-                          color: AppTheme.cardBorder,
-                          height: 1,
-                        ),
-                      ),
-                      _buildAccountInfo(
-                        icon: Icons.email_outlined,
-                        label: 'Email Address',
-                        value: userEmail,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(
-                          color: AppTheme.cardBorder,
-                          height: 1,
-                        ),
-                      ),
-                      _buildAccountInfo(
-                        icon: Icons.verified_user_outlined,
-                        label: 'Account Status',
-                        value: 'Registered Member',
-                      ),
-                    ],
-                  ),
+  Widget _buildHeaderCard(bool isLoggedIn, String userName, String userEmail) {
+    final initial = isLoggedIn && userName.isNotEmpty
+        ? userName[0].toUpperCase()
+        : 'G';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3A1220), AppTheme.cardBg],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppTheme.f1Red,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.f1Red.withOpacity(0.3),
+                  spreadRadius: 3,
                 ),
               ],
-
-              const SizedBox(height: 24),
-
-              // FAVORITES
-              const Text(
-                'MY COLLECTION',
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isLoggedIn ? userName : 'Guest User',
+                  style: AppText.h2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-
-              const SizedBox(height: 10),
-
-              _buildMenuItem(
-                icon: Icons.favorite_rounded,
-                title: 'Favorite Tickets',
-                subtitle: 'View your saved tickets',
-                iconColor: AppTheme.f1Red,
-                onTap: _openFavorites,
-              ),
-
-              const SizedBox(height: 24),
-
-              // LOG OUT
-              if (isLoggedIn)
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(
-                      Icons.logout,
-                      color: Colors.redAccent,
+                const SizedBox(height: 3),
+                Text(
+                  isLoggedIn ? userEmail : 'Sign in to manage your tickets',
+                  style: AppText.caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isLoggedIn) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    label: const Text(
-                      'LOG OUT',
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified_rounded,
+                            size: 13, color: AppTheme.success),
+                        SizedBox(width: 4),
+                        Text(
+                          'Registered Member',
+                          style: TextStyle(color: Colors.white, fontSize: 11),
+                        ),
+                      ],
                     ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                        color: Colors.redAccent,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _showLogoutDialog(context, authCtrl),
                   ),
-                ),
-
-              const SizedBox(height: 40),
-            ],
-          );
-        }),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.gold,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.gold,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 10,
-          ),
-        ),
-      ],
+          const SizedBox(height: 3),
+          Text(label, style: AppText.caption),
+        ],
+      ),
     );
   }
 
@@ -339,40 +292,33 @@ class ProfilePage extends StatelessWidget {
     required String label,
     required String value,
   }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: AppTheme.f1Red,
-          size: 20,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 11,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.textMuted, size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppText.caption),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -383,62 +329,41 @@ class ProfilePage extends StatelessWidget {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: AppTheme.cardBg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.cardBorder),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
+    return Pressable(
+      child: Material(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: AppText.title),
+                      const SizedBox(height: 2),
+                      Text(subtitle, style: AppText.caption),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 15,
-                color: AppTheme.textMuted,
-              ),
-            ],
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppTheme.textMuted),
+              ],
+            ),
           ),
         ),
       ),

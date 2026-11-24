@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/venue_controller.dart';
 import '../models/venue_gate.dart';
+import '../widgets/motion.dart';
 
 const Color bgColor = Color(0xFF0B0B10);
 const Color surfaceColor = Color(0xFF15151E);
@@ -43,12 +44,11 @@ class VenuePage extends GetView<VenueController> {
               ),
               const SizedBox(height: 24),
               const Text(
-                'CIRCUIT PARK GATE',
+                'Circuit Park Gate',
                 style: TextStyle(
                   color: primaryRed,
-                  fontSize: 11,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -93,7 +93,7 @@ class VenuePage extends GetView<VenueController> {
                     _showReminder(gate);
                   },
                   icon: const Icon(Icons.notifications_active),
-                  label: const Text('SET REMINDER'),
+                  label: const Text('Set Reminder'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryRed,
                     foregroundColor: Colors.white,
@@ -135,7 +135,7 @@ class VenuePage extends GetView<VenueController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'VENUE MAP',
+              'Venue Map',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -143,11 +143,10 @@ class VenuePage extends GetView<VenueController> {
               ),
             ),
             Text(
-              'MARINA BAY STREET CIRCUIT',
+              'Marina Bay Street Circuit',
               style: TextStyle(
                 color: secondaryText,
-                fontSize: 10,
-                letterSpacing: 1.5,
+                fontSize: 11,
               ),
             ),
           ],
@@ -164,7 +163,10 @@ class VenuePage extends GetView<VenueController> {
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: RefreshIndicator(
         color: primaryRed,
         backgroundColor: surfaceColor,
         onRefresh: controller.refreshLocation,
@@ -182,13 +184,10 @@ class VenuePage extends GetView<VenueController> {
                   horizontal: 16,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(24),
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: borderColor,
-                      ),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: _CircuitMap(
                       onGateTap: _showGateDetails,
@@ -232,8 +231,7 @@ class VenuePage extends GetView<VenueController> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: surfaceColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: borderColor),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                     child: Row(
                       children: [
@@ -255,17 +253,16 @@ class VenuePage extends GetView<VenueController> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'GPS LOCATION',
+                                'GPS Location',
                                 style: TextStyle(
                                   color: secondaryText,
-                                  fontSize: 10,
-                                  letterSpacing: 1.5,
+                                  fontSize: 11,
                                 ),
                               ),
                               const SizedBox(height: 5),
                               Text(
                                 position == null
-                                    ? 'Waiting for location...'
+                                    ? 'Waiting for Location...'
                                     : '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -276,10 +273,10 @@ class VenuePage extends GetView<VenueController> {
                               const SizedBox(height: 5),
                               Text(
                                 controller.isLoading.value
-                                    ? 'Getting your location...'
+                                    ? 'Getting Your Location...'
                                     : controller.hasPermission.value
-                                        ? 'Location connected'
-                                        : 'Location permission required',
+                                        ? 'Location Connected'
+                                        : 'Location Permission Required',
                                 style: TextStyle(
                                   color: controller.hasPermission.value
                                       ? successColor
@@ -340,7 +337,7 @@ class VenuePage extends GetView<VenueController> {
                               }
                             },
                             child: const Text(
-                              'OPEN SETTINGS',
+                              'Open Settings',
                               style: TextStyle(color: primaryRed),
                             ),
                           ),
@@ -360,16 +357,6 @@ class VenuePage extends GetView<VenueController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'CIRCUIT PARK GATES',
-                      style: TextStyle(
-                        color: primaryRed,
-                        fontSize: 11,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
                     Row(
                       children: [
                         const Expanded(
@@ -377,13 +364,14 @@ class VenuePage extends GetView<VenueController> {
                             'Gates & Proximity',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 21,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
                             ),
                           ),
                         ),
                         Obx(() => Text(
-                              '${controller.nearbyGates.length} GATES',
+                              '${controller.nearbyGates.length} Gates',
                               style: const TextStyle(
                                 color: secondaryText,
                                 fontSize: 11,
@@ -404,7 +392,7 @@ class VenuePage extends GetView<VenueController> {
                     padding: EdgeInsets.all(24),
                     child: Center(
                       child: Text(
-                        'Waiting for GPS location...',
+                        'Waiting for GPS Location...',
                         style: TextStyle(color: secondaryText),
                       ),
                     ),
@@ -423,121 +411,88 @@ class VenuePage extends GetView<VenueController> {
                     final item = controller.nearbyGates[index];
                     final gate = item.gate;
 
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
+                    return Pressable(
+                      child: Material(
                         color: surfaceColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(11),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF242433),
-                                  borderRadius: BorderRadius.circular(11),
-                                ),
-                                child: const Icon(
-                                  Icons.door_front_door_outlined,
-                                  color: secondaryText,
-                                  size: 23,
-                                ),
-                              ),
-                              const SizedBox(width: 13),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      gate.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      gate.location,
-                                      style: const TextStyle(
-                                        color: secondaryText,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (item.isNearby)
+                        borderRadius: BorderRadius.circular(18),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () => _showGateDetails(gate),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 5,
-                                  ),
+                                  width: 42,
+                                  height: 42,
+                                  alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: successColor.withValues(
-                                      alpha: 0.12,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
+                                    color: const Color(0xFF242433),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Text(
-                                    'NEARBY',
-                                    style: TextStyle(
-                                      color: successColor,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
+                                  child: Text(
+                                    gate.id.replaceAll(RegExp(r'[^0-9]'), ''),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        gate.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        item.isNearby
+                                            ? '${item.formattedDistance} · Nearby'
+                                            : item.formattedDistance,
+                                        style: TextStyle(
+                                          color: item.isNearby
+                                              ? successColor
+                                              : secondaryText,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Material(
+                                  color: const Color(0xFF242433),
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () => _showReminder(gate),
+                                    child: const SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: Icon(
+                                        Icons.notifications_none_rounded,
+                                        size: 19,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.navigation,
-                                color: primaryRed,
-                                size: 15,
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: Text(
-                                  item.formattedDistance,
-                                  style: TextStyle(
-                                    color: item.isNearby
-                                        ? successColor
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: () => _showReminder(gate),
-                                icon: const Icon(
-                                  Icons.notifications_none,
-                                  size: 16,
-                                ),
-                                label: const Text(
-                                  'REMIND ME',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  side: const BorderSide(
-                                    color: borderColor,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     );
                   },
@@ -552,11 +507,12 @@ class VenuePage extends GetView<VenueController> {
                   horizontal: 18,
                 ),
                 child: const Text(
-                  'MY GATE REMINDERS',
+                  'My Gate Reminders',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
@@ -585,7 +541,15 @@ class VenuePage extends GetView<VenueController> {
                       reminder['dateTime'],
                     );
 
-                    return ListTile(
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: ListTile(
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                       title: Text(
                         reminder['gateName'],
                         style: const TextStyle(
@@ -607,6 +571,7 @@ class VenuePage extends GetView<VenueController> {
                           color: Colors.redAccent,
                         ),
                       ),
+                    ),
                     );
                   }).toList(),
                 );
@@ -614,6 +579,7 @@ class VenuePage extends GetView<VenueController> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -789,12 +755,11 @@ class _CircuitMapState extends State<_CircuitMap> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    'MARINA BAY CIRCUIT',
+                    'Marina Bay Circuit',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -949,17 +914,16 @@ class _ReminderSheetState extends State<ReminderSheet> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'SET REMINDER',
+              'Set Reminder',
               style: TextStyle(
                 color: primaryRed,
-                fontSize: 11,
-                letterSpacing: 2,
-                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Remind me at the gate',
+              'Remind Me at the Gate',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 21,
@@ -976,7 +940,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'SELECT RACE DAY',
+              'Select Race Day',
               style: TextStyle(
                 color: secondaryText,
                 fontSize: 11,
@@ -991,7 +955,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
                   final date = raceDates[index];
                   final selected = selectedDate.day == date.day;
 
-                  const days = ['FRI', 'SAT', 'SUN'];
+                  const days = ['Fri', 'Sat', 'Sun'];
 
                   return Expanded(
                     child: Padding(
@@ -1026,7 +990,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                '${date.day} OCT',
+                                '${date.day} Oct',
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 10,
@@ -1043,7 +1007,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
             ),
             const SizedBox(height: 22),
             const Text(
-              'REMINDER TIME',
+              'Reminder Time',
               style: TextStyle(
                 color: secondaryText,
                 fontSize: 11,
@@ -1077,7 +1041,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
                     ),
                     const Spacer(),
                     const Text(
-                      'CHANGE',
+                      'Change',
                       style: TextStyle(
                         color: primaryRed,
                         fontSize: 10,
@@ -1106,10 +1070,9 @@ class _ReminderSheetState extends State<ReminderSheet> {
                         color: Colors.white,
                       )
                     : const Text(
-                        'SAVE REMINDER',
+                        'Save Reminder',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
                         ),
                       ),
               ),

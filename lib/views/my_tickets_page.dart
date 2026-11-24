@@ -7,9 +7,19 @@ import '../controllers/auth_controller.dart';
 import '../controllers/currency_controller.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
+import '../widgets/e_ticket_sheet.dart';
+import '../widgets/motion.dart';
+import '../widgets/segmented_filter.dart';
 
-class MyTicketsPage extends StatelessWidget {
+class MyTicketsPage extends StatefulWidget {
   const MyTicketsPage({super.key});
+
+  @override
+  State<MyTicketsPage> createState() => _MyTicketsPageState();
+}
+
+class _MyTicketsPageState extends State<MyTicketsPage> {
+  int _filter = 0; // 0 = Active, 1 = Cancelled
 
   @override
   Widget build(BuildContext context) {
@@ -18,31 +28,71 @@ class MyTicketsPage extends StatelessWidget {
     final currencyCtrl = Get.find<CurrencyController>();
 
     return Scaffold(
-      body: Obx(() {
-        if (!authCtrl.isLoggedIn.value) {
-          return _buildGuestPrompt();
-        }
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: Obx(() {
+          if (!authCtrl.isLoggedIn.value) {
+            return _buildGuestPrompt();
+          }
 
-        final orders = orderCtrl.orders;
+          final all = orderCtrl.orders.toList();
 
-        if (orders.isEmpty) {
-          return _buildEmptyTickets(context);
-        }
+          if (all.isEmpty) {
+            return _buildEmptyTickets(context);
+          }
 
-        return RefreshIndicator(
-          onRefresh: () async => orderCtrl.loadOrders(),
-          color: AppTheme.f1Red,
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return _buildTicketOrderCard(
-                  context, order, orderCtrl, currencyCtrl);
-            },
-          ),
-        );
-      }),
+          final active = all.where((o) => o.status != 'cancelled').toList();
+          final cancelled = all.where((o) => o.status == 'cancelled').toList();
+          final shown = _filter == 0 ? active : cancelled;
+
+          return RefreshIndicator(
+            onRefresh: () async => orderCtrl.loadOrders(),
+            color: AppTheme.f1Red,
+            backgroundColor: AppTheme.surfaceBg,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+              children: [
+                const Text('My Tickets', style: AppText.h1),
+                const SizedBox(height: 2),
+                Text(
+                  '${all.length} ${all.length == 1 ? 'booking' : 'bookings'}',
+                  style: AppText.caption,
+                ),
+                const SizedBox(height: 14),
+                SegmentedFilter(
+                  labels: const ['Active', 'Cancelled'],
+                  selectedIndex: _filter,
+                  onChanged: (i) => setState(() => _filter = i),
+                ),
+                const SizedBox(height: 16),
+                if (shown.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48),
+                    child: Center(
+                      child: Text(
+                        _filter == 0
+                            ? 'No active bookings right now.'
+                            : 'No cancelled bookings.',
+                        style: AppText.caption,
+                      ),
+                    ),
+                  )
+                else
+                  for (int i = 0; i < shown.length; i++)
+                    FadeSlideIn(
+                      key: ValueKey('${shown[i].id}-$_filter'),
+                      delay: Duration(milliseconds: 70 * (i < 4 ? i : 4)),
+                      offsetY: 18,
+                      child: _buildTicketOrderCard(
+                          context, shown[i], orderCtrl, currencyCtrl),
+                    ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -54,29 +104,26 @@ class MyTicketsPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(22),
+              decoration: const BoxDecoration(
                 color: AppTheme.cardBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.cardBorder),
               ),
               child: const Icon(Icons.confirmation_number_outlined,
-                  size: 48, color: AppTheme.f1Red),
+                  size: 46, color: AppTheme.f1Red),
             ),
             const SizedBox(height: 20),
             const Text(
               'Sign In to View Your Tickets',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
+              style: AppText.h2,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
               'Your booked passes, grandstand reservations, and reminders are tied to your personal account.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: AppTheme.textMuted, fontSize: 13, height: 1.4),
+                  color: AppTheme.textMuted, fontSize: 13, height: 1.45),
             ),
             const SizedBox(height: 24),
             AppButton(
@@ -100,21 +147,88 @@ class MyTicketsPage extends StatelessWidget {
             Icon(Icons.airplane_ticket_outlined,
                 size: 54, color: AppTheme.textMuted.withOpacity(0.5)),
             const SizedBox(height: 16),
-            const Text(
-              'No Tickets Booked Yet',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
-            ),
+            const Text('No Tickets Booked Yet', style: AppText.h2),
             const SizedBox(height: 8),
             const Text(
               'Browse the official Grandstand, Walkabout, and Hospitality packages on the Home tab.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              style: TextStyle(
+                  color: AppTheme.textMuted, fontSize: 13, height: 1.45),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _dashedDivider() {
+    return SizedBox(
+      height: 18,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final n = (constraints.maxWidth / 9).floor();
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    n,
+                    (_) => Container(
+                        width: 4, height: 1, color: AppTheme.cardBorder),
+                  ),
+                );
+              },
+            ),
+          ),
+          Positioned(
+            left: -9,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: const BoxDecoration(
+                color: AppTheme.darkBg,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            right: -9,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: const BoxDecoration(
+                color: AppTheme.darkBg,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoColumn(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppText.caption),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -125,186 +239,125 @@ class MyTicketsPage extends StatelessWidget {
     OrderController orderCtrl,
     CurrencyController currencyCtrl,
   ) {
-    final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
+    final isCancelled = order.status == 'cancelled';
+    final dateFormat = DateFormat('dd MMM yyyy');
+    final statusColor = isCancelled ? AppTheme.soldOut : AppTheme.success;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Status Badge & Booking Date
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: AppTheme.surfaceBg,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    return Opacity(
+      opacity: isCancelled ? 0.7 : 1,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: order.status == 'cancelled'
-                            ? AppTheme.soldOut
-                            : AppTheme.success,
-                        shape: BoxShape.circle,
-                      ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(order.packageName, style: AppText.title),
+                        const SizedBox(height: 3),
+                        Text(order.attendance, style: AppText.caption),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      order.status == 'cancelled'
-                          ? 'CANCELLED'
-                          : 'CONFIRMED & ACTIVE',
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isCancelled ? 'Cancelled' : 'Confirmed',
                       style: TextStyle(
-                        color: order.status == 'cancelled'
-                            ? AppTheme.soldOut
-                            : AppTheme.success,
+                        color: statusColor,
                         fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-                Text(
-                  dateFormat.format(order.createdAt),
-                  style:
-                      const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Package Name & Attendance Session
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            order.packageName,
+            _dashedDivider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _infoColumn('Booked', dateFormat.format(order.createdAt)),
+                      _infoColumn('Quantity',
+                          '${order.quantity} ${order.quantity == 1 ? 'Ticket' : 'Tickets'}'),
+                      _infoColumn('Holder', order.attendeeName),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      const Text('Total', style: AppText.caption),
+                      const Spacer(),
+                      Obx(() => Text(
+                            currencyCtrl.formatPrice(order.totalPriceSGD),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.f1Red.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                  color: AppTheme.f1Red.withOpacity(0.3)),
-                            ),
-                            child: Text(
-                              order.attendance,
-                              style: const TextStyle(
-                                color: AppTheme.f1Red,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Obx(() => Text(
-                              currencyCtrl.formatPrice(order.totalPriceSGD),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            )),
-                        Text(
-                          '${order.quantity} x Tickets',
-                          style: const TextStyle(
-                              color: AppTheme.textMuted, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-                const Divider(color: AppTheme.cardBorder, height: 1),
-                const SizedBox(height: 12),
-
-                // Attendee Info
-                Row(
-                  children: [
-                    const Icon(Icons.person_outline,
-                        size: 16, color: AppTheme.textMuted),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Holder: ${order.attendeeName}',
-                        style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Cancelled orders remain visible as history and cannot be edited.
-                if (order.status != 'cancelled')
-                  SizedBox(
-                    width: double.infinity,
-                    height: 42,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.settings_outlined,
-                          size: 16, color: AppTheme.textWhite),
-                      label: const Text(
-                        'KELOLA TIKET',
-                        style: TextStyle(
-                          color: AppTheme.textWhite,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppTheme.cardBorder),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        backgroundColor: AppTheme.surfaceBg,
-                      ),
-                      onPressed: () => _openManageTicketBottomSheet(
-                          context, order, orderCtrl),
-                    ),
+                          )),
+                    ],
                   ),
-              ],
+                  // Cancelled orders remain visible as history and cannot be edited.
+                  if (!isCancelled) ...[
+                    const SizedBox(height: 14),
+                    Pressable(
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 42,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.tune_rounded,
+                              size: 17, color: AppTheme.textWhite),
+                          label: const Text(
+                            'Manage Ticket',
+                            style: TextStyle(
+                              color: AppTheme.textWhite,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppTheme.surfaceBg,
+                            shape: const StadiumBorder(),
+                          ),
+                          onPressed: () => _openManageTicketBottomSheet(
+                              context, order, orderCtrl),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -316,13 +369,14 @@ class MyTicketsPage extends StatelessWidget {
     OrderController orderCtrl,
   ) {
     final nameCtrl = TextEditingController(text: order.attendeeName);
+    final pageContext = context; // context halaman (bukan context sheet)
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.cardBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => Padding(
@@ -348,7 +402,7 @@ class MyTicketsPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                '08 Kelola Tiket',
+                'Manage Ticket',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -430,7 +484,21 @@ class MyTicketsPage extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+
+              // E-ticket: tampilkan QR code
+              AppButton(
+                text: 'Lihat E-Ticket',
+                icon: Icons.qr_code_2_rounded,
+                isOutlined: true,
+                color: AppTheme.textWhite,
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  showETicket(pageContext, order);
+                },
+              ),
+
+              const SizedBox(height: 6),
 
               // Cancel Ticket Button (CRUD Delete)
               SizedBox(

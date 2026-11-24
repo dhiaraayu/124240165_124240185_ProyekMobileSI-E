@@ -38,7 +38,7 @@ class OrderService {
     // Trigger immediate confirmation notification
     await DeviceService.showNow(
       id: notifId,
-      title: 'Order Confirmed! 🏎️',
+      title: 'Order Confirmed!',
       body:
           '$quantity x $packageName ($attendance) has been booked successfully.',
     );
@@ -51,7 +51,7 @@ class OrderService {
       try {
         await DeviceService.schedule(
           id: notifId + 1,
-          title: 'F1 Singapore GP Tomorrow! 🏁',
+          title: 'F1 Singapore GP Tomorrow!',
           body: 'Prepare your tickets for $packageName. Gates open tomorrow!',
           scheduledDate: reminderEve,
         );

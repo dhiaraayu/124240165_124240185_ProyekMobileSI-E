@@ -77,9 +77,17 @@ class HomeController extends GetxController {
 
   // Smooth scroll to ticket carousel when BUY NOW is clicked
   void scrollToCarousel() {
-    if (scrollController.hasClients) {
+    final ctx = carouselKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.04,
+      );
+    } else if (scrollController.hasClients) {
       scrollController.animateTo(
-        340.0, // Height to ticket carousel
+        300.0, // fallback: perkiraan posisi carousel
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOutCubic,
       );

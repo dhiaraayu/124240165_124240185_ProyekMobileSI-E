@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'motion.dart';
 
 class AppButton extends StatelessWidget {
   final String text;
@@ -28,7 +29,8 @@ class AppButton extends StatelessWidget {
     final effectiveColor = color ?? AppTheme.f1Red;
 
     if (isOutlined) {
-      return SizedBox(
+      return Pressable(
+        child: SizedBox(
         width: width ?? double.infinity,
         height: height,
         child: OutlinedButton(
@@ -50,10 +52,12 @@ class AppButton extends StatelessWidget {
                 )
               : _buildContent(effectiveColor),
         ),
+      ),
       );
     }
 
-    return SizedBox(
+    return Pressable(
+      child: SizedBox(
       width: width ?? double.infinity,
       height: height,
       child: ElevatedButton(
@@ -63,7 +67,7 @@ class AppButton extends StatelessWidget {
           disabledBackgroundColor: effectiveColor.withOpacity(0.5),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
+          elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
@@ -75,6 +79,7 @@ class AppButton extends StatelessWidget {
                 ),
               )
             : _buildContent(Colors.white),
+      ),
       ),
     );
   }
@@ -93,7 +98,6 @@ class AppButton extends StatelessWidget {
               color: textColor,
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -106,7 +110,6 @@ class AppButton extends StatelessWidget {
         color: textColor,
         fontWeight: FontWeight.bold,
         fontSize: 15,
-        letterSpacing: 0.5,
       ),
     );
   }

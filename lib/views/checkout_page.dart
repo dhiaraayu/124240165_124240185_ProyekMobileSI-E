@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/app_button.dart';
 import '../widgets/currency_selector.dart';
 import 'root_page.dart';
+import '../widgets/motion.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -124,11 +125,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
               const SizedBox(height: 16),
               const Text(
-                '06 Pesanan Berhasil!',
+                'Order Confirmed!',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 6),
@@ -240,7 +241,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
               // Connects to "07 Tiketku"
               AppButton(
-                text: 'View My Tickets (07 Tiketku)',
+                text: 'View My Tickets',
                 onPressed: () {
                   Navigator.of(ctx).pop();
                   Get.offAll(() => const RootPage(initialIndex: 1));
@@ -260,7 +261,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('05 Checkout'),
+        title: const Text('Checkout'),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 12),
@@ -268,7 +269,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -280,8 +284,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.cardBorder),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
@@ -482,8 +485,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.cardBorder),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   children: [
@@ -538,7 +540,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ),
                         ),
                         const Text(
-                          'FREE',
+                          'Free',
                           style: TextStyle(
                             color: AppTheme.success,
                             fontWeight: FontWeight.bold,
@@ -565,7 +567,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   currencyCtrl.formatPrice(_totalPriceSGD),
                                   style: const TextStyle(
                                     color: AppTheme.f1Red,
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w800,
                                     fontSize: 18,
                                   ),
                                 ),
@@ -624,6 +626,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

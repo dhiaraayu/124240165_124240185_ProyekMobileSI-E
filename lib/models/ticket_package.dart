@@ -16,6 +16,7 @@ class TicketPackage {
   final String imageAsset;
   final String status; // 'available' | 'soldOut' | 'unavailable'
   final bool featured;
+  final int? remaining; // sisa kursi (opsional, tampil jika diisi)
 
   TicketPackage({
     required this.id,
@@ -33,6 +34,7 @@ class TicketPackage {
     required this.imageAsset,
     this.status = 'available',
     this.featured = false,
+    this.remaining,
   });
 
   bool get isAvailable => status.toLowerCase() == 'available';
@@ -101,6 +103,7 @@ class TicketPackage {
       'imageAsset': imageAsset,
       'status': status,
       'featured': featured,
+      'remaining': remaining,
     };
   }
 
@@ -122,6 +125,7 @@ class TicketPackage {
       imageAsset: map['imageAsset'] ?? '',
       status: map['status'] ?? 'available',
       featured: map['featured'] ?? false,
+      remaining: (map['remaining'] as num?)?.toInt(),
     );
   }
 }
@@ -152,13 +156,14 @@ class TicketPackageAdapter extends TypeAdapter<TicketPackage> {
       imageAsset: fields[12] as String,
       status: fields[13] as String? ?? 'available',
       featured: fields[14] as bool? ?? false,
+      remaining: fields[15] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TicketPackage obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -188,6 +193,8 @@ class TicketPackageAdapter extends TypeAdapter<TicketPackage> {
       ..writeByte(13)
       ..write(obj.status)
       ..writeByte(14)
-      ..write(obj.featured);
+      ..write(obj.featured)
+      ..writeByte(15)
+      ..write(obj.remaining);
   }
 }

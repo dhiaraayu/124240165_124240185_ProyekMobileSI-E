@@ -53,7 +53,7 @@ class TicketController extends GetxController {
           wishlistedIds.add(packageId);
           Get.snackbar(
             'Wishlist Updated',
-            'Added ticket to your wishlist ❤️',
+            'Added ticket to your wishlist',
             snackPosition: SnackPosition.BOTTOM,
           );
         } else {

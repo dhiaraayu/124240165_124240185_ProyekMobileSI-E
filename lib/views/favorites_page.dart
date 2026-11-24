@@ -6,6 +6,7 @@ import '../controllers/ticket_controller.dart';
 import '../controllers/currency_controller.dart';
 import '../models/ticket_package.dart';
 import '../theme.dart';
+import '../widgets/motion.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
@@ -36,13 +37,16 @@ class FavoritesPage extends StatelessWidget {
           ),
         ),
       ),
-      body: Obx(() {
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: Obx(() {
         if (!authCtrl.isLoggedIn.value) {
           return _buildEmptyState(
             icon: Icons.lock_outline_rounded,
             title: 'Sign In Required',
             subtitle: 'Sign in to access your saved tickets.',
-            buttonText: 'SIGN IN / SIGN UP',
+            buttonText: 'Sign In / Sign Up',
             onPressed: () => Get.toNamed('/login'),
           );
         }
@@ -59,7 +63,7 @@ class FavoritesPage extends StatelessWidget {
             title: 'No Favorites Yet',
             subtitle:
                 'Save your favorite grandstands and packages to find them here.',
-            buttonText: 'BROWSE TICKETS',
+            buttonText: 'Browse Tickets',
             onPressed: () => Get.back(),
           );
         }
@@ -70,12 +74,11 @@ class FavoritesPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: Text(
-                '${favorites.length} SAVED TICKETS',
+                '${favorites.length} Saved Tickets',
                 style: const TextStyle(
                   color: AppTheme.textMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.3,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -97,6 +100,7 @@ class FavoritesPage extends StatelessWidget {
           ],
         );
       }),
+      ),
     );
   }
 
@@ -109,8 +113,7 @@ class FavoritesPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +159,7 @@ class FavoritesPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      ticket.isAvailable ? 'AVAILABLE' : 'SOLD OUT',
+                      ticket.isAvailable ? 'Available' : 'Sold Out',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -172,7 +175,7 @@ class FavoritesPage extends StatelessWidget {
                     color: Colors.black.withOpacity(0.65),
                     shape: const CircleBorder(),
                     child: IconButton(
-                      tooltip: 'Remove from favorites',
+                      tooltip: 'Remove From Favorites',
                       onPressed: () {
                         ticketCtrl.toggleWishlist(ticket.id);
                       },
@@ -217,11 +220,10 @@ class FavoritesPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'STARTING FROM',
+                            'Starting From',
                             style: TextStyle(
                               color: AppTheme.textMuted,
-                              fontSize: 9,
-                              letterSpacing: 1,
+                              fontSize: 11,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -250,7 +252,7 @@ class FavoritesPage extends StatelessWidget {
                         size: 18,
                       ),
                       label: const Text(
-                        'REMOVE',
+                        'Remove',
                         style: TextStyle(
                           color: Colors.redAccent,
                           fontWeight: FontWeight.bold,
@@ -332,7 +334,6 @@ class FavoritesPage extends StatelessWidget {
                   buttonText,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.7,
                   ),
                 ),
               ),

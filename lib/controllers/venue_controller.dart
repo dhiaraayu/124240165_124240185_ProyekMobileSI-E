@@ -49,17 +49,23 @@ class VenueController extends GetxController {
   Box? _reminderBox;
   bool _initialized = false;
 
+  @override
+  void onReady() {
+    super.onReady();
+    initializeVenue();
+  }
+
   Future<void> initializeVenue() async {
     if (_initialized || isLoading.value) return;
     _initialized = true;
     try {
-      await notifications.initialize();
-
       _reminderBox = await Hive.openBox(
         'venue_gate_reminders',
       );
 
       loadReminders();
+
+      await notifications.initialize();
 
       await refreshLocation();
     } catch (e) {
@@ -163,9 +169,7 @@ class VenueController extends GetxController {
     required VenueGate gate,
     required DateTime dateTime,
   }) async {
-    if (_reminderBox == null) {
-      throw Exception('Reminder storage is unavailable.');
-    }
+    _reminderBox ??= await Hive.openBox('venue_gate_reminders');
 
     if (!dateTime.isAfter(DateTime.now())) {
       throw Exception('Please select a future date and time.');

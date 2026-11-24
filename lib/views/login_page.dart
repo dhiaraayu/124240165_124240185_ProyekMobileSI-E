@@ -5,6 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../services/local_service.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
+import '../widgets/motion.dart';
 
 class LoginPage extends StatefulWidget {
   /// true = layar pertama saat app dibuka (ada tombol Lewati).
@@ -113,7 +114,7 @@ class _LoginPageState extends State<LoginPage>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('CONTINUE TO SIGN IN'),
+              child: const Text('Continue to Sign In'),
             ),
           ],
         ),
@@ -155,14 +156,17 @@ class _LoginPageState extends State<LoginPage>
                 TextButton(
                   onPressed: _skip,
                   child: const Text(
-                    'Lewati',
+                    'Skip',
                     style: TextStyle(color: Colors.white70),
                   ),
                 ),
               ]
             : null,
       ),
-      body: SafeArea(
+      body: FadeSlideIn(
+        offsetY: 12,
+        duration: const Duration(milliseconds: 380),
+        child: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
@@ -183,13 +187,14 @@ class _LoginPageState extends State<LoginPage>
                 child: TextButton(
                   onPressed: _skip,
                   child: const Text(
-                    'Lanjut tanpa akun',
+                    'Continue Without an Account',
                     style: TextStyle(color: AppTheme.textMuted),
                   ),
                 ),
               ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -206,12 +211,11 @@ class _LoginPageState extends State<LoginPage>
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
-              'F1 SINGAPORE GP TICKETING',
+              'F1 Singapore GP Ticketing',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 10,
-                letterSpacing: 1.2,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
               ),
             ),
           ),
@@ -234,8 +238,7 @@ class _LoginPageState extends State<LoginPage>
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.cardBorder),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: TabBar(
         controller: _tabController,
