@@ -70,11 +70,12 @@ class AuthController extends GetxController {
 
   /// Dipanggil setelah login/register berhasil.
   void _finishAuth() {
-    LocalService.markWelcomeSeen();
-
-    // Datang dari layar awal (welcome): tidak ada halaman sebelumnya,
+    // Datang dari alur onboarding: tidak ada halaman tujuan sebelumnya,
     // jadi pindah ke beranda.
-    if (Get.currentRoute == '/welcome') {
+    final route = Get.currentRoute;
+    if (route == '/welcome' ||
+        route == '/auth-choice' ||
+        route == '/auth-login') {
       _pendingAction = null;
       Get.offAllNamed('/root');
       return;

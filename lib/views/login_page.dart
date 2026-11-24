@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/auth_controller.dart';
-import '../services/local_service.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
 import '../widgets/motion.dart';
@@ -41,7 +40,13 @@ class _LoginPageState extends State<LoginPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final args = Get.arguments;
+    final startTab = (args is Map && args['tab'] == 1) ? 1 : 0;
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: startTab,
+    );
   }
 
   @override
@@ -59,7 +64,7 @@ class _LoginPageState extends State<LoginPage>
   // ---------- Actions ----------
 
   void _skip() {
-    LocalService.markWelcomeSeen();
+    // Guest: masuk ke beranda tanpa sesi login.
     Get.offAllNamed('/root');
   }
 
@@ -146,55 +151,49 @@ class _LoginPageState extends State<LoginPage>
         centerTitle: true,
         automaticallyImplyLeading: false,
         leading: widget.isWelcome
-            ? null
+            ? (Navigator.of(context).canPop()
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () => Get.back(),
+                  )
+                : null)
             : IconButton(
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => Get.back(),
               ),
-        actions: widget.isWelcome
-            ? [
-                TextButton(
-                  onPressed: _skip,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                ),
-              ]
-            : null,
       ),
       body: FadeSlideIn(
         offsetY: 12,
         duration: const Duration(milliseconds: 380),
         child: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildTabSelector(),
-            const SizedBox(height: 12),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildSignInTab(authCtrl),
-                  _buildRegisterTab(authCtrl),
-                ],
-              ),
-            ),
-            if (widget.isWelcome)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: TextButton(
-                  onPressed: _skip,
-                  child: const Text(
-                    'Continue Without an Account',
-                    style: TextStyle(color: AppTheme.textMuted),
-                  ),
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildTabSelector(),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildSignInTab(authCtrl),
+                    _buildRegisterTab(authCtrl),
+                  ],
                 ),
               ),
-          ],
+              if (widget.isWelcome)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextButton(
+                    onPressed: _skip,
+                    child: const Text(
+                      'Continue Without an Account',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

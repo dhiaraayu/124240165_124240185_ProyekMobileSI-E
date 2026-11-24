@@ -28,12 +28,10 @@ class SgGpTicketsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pertama kali buka & belum login -> layar login (bisa dilewati).
-    // Selain itu langsung ke beranda.
+    // Belum login -> onboarding setiap kali app dibuka (tanpa flag permanen).
+    // Sudah login -> langsung ke beranda.
     final String startRoute =
-        (LocalService.isLoggedIn || LocalService.welcomeSeen)
-            ? AppRoutes.root
-            : AppRoutes.welcome;
+        LocalService.isLoggedIn ? AppRoutes.root : AppRoutes.welcome;
 
     return GetMaterialApp(
       title: 'SG GP Tickets 2027',
