@@ -76,8 +76,10 @@ class _VideoBgHeroState extends State<VideoBgHero> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.f1Red.withOpacity(_isVideoInitialized ? 0.35 : 0.45),
-                    const Color(0xFF0B0C14).withOpacity(_isVideoInitialized ? 0.75 : 0.95),
+                    AppTheme.f1Red
+                        .withOpacity(_isVideoInitialized ? 0.35 : 0.45),
+                    const Color(0xFF0B0C14)
+                        .withOpacity(_isVideoInitialized ? 0.75 : 0.95),
                     AppTheme.darkBg,
                   ],
                   begin: Alignment.topCenter,
@@ -115,7 +117,8 @@ class _VideoBgHeroState extends State<VideoBgHero> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppTheme.f1Red,
                         borderRadius: BorderRadius.circular(4),
@@ -132,7 +135,8 @@ class _VideoBgHeroState extends State<VideoBgHero> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(4),
@@ -204,7 +208,8 @@ class _VideoBgHeroState extends State<VideoBgHero> {
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(Icons.keyboard_double_arrow_down_rounded, size: 20),
+                        Icon(Icons.keyboard_double_arrow_down_rounded,
+                            size: 20),
                       ],
                     ),
                   ),

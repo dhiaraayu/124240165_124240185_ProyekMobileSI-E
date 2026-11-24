@@ -20,7 +20,8 @@ class OrderController extends GetxController {
   void loadOrders() {
     final authCtrl = Get.find<AuthController>();
     if (authCtrl.isLoggedIn.value && authCtrl.currentUserId.value.isNotEmpty) {
-      orders.value = _orderService.getOrdersForUser(authCtrl.currentUserId.value);
+      orders.value =
+          _orderService.getOrdersForUser(authCtrl.currentUserId.value);
     } else {
       orders.clear();
     }
@@ -53,6 +54,17 @@ class OrderController extends GetxController {
       );
 
       loadOrders();
+      final reminderError = _orderService.lastReminderError;
+      if (reminderError != null) {
+        Get.snackbar(
+          'Booking Confirmed',
+          'Your order was saved, but the reminder was not scheduled: $reminderError',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.shade800,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+      }
       return order;
     } catch (e) {
       Get.snackbar(

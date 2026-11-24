@@ -18,6 +18,7 @@ class _TicketDetailPageState extends State<TicketDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late TicketPackage _ticket;
+  bool _invalidTicket = false;
 
   @override
   void initState() {
@@ -29,8 +30,10 @@ class _TicketDetailPageState extends State<TicketDetailPage>
       _ticket = arg;
     } else if (ticketCtrl.selectedTicket.value != null) {
       _ticket = ticketCtrl.selectedTicket.value!;
-    } else {
+    } else if (ticketCtrl.tickets.isNotEmpty) {
       _ticket = ticketCtrl.tickets.first;
+    } else {
+      _invalidTicket = true;
     }
   }
 
@@ -67,6 +70,18 @@ class _TicketDetailPageState extends State<TicketDetailPage>
   Widget build(BuildContext context) {
     final ticketCtrl = Get.find<TicketController>();
     final currencyCtrl = Get.find<CurrencyController>();
+
+    if (_invalidTicket) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Ticket Details')),
+        body: const Center(
+          child: Text(
+            'Ticket details are unavailable. Please return and select a ticket.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -108,7 +123,8 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: AppTheme.cardBg,
                     child: const Center(
-                      child: Icon(Icons.confirmation_number_outlined, size: 48, color: AppTheme.f1Red),
+                      child: Icon(Icons.confirmation_number_outlined,
+                          size: 48, color: AppTheme.f1Red),
                     ),
                   ),
                 ),
@@ -169,7 +185,8 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: _ticket.isAvailable
                                   ? AppTheme.success.withOpacity(0.2)
@@ -194,7 +211,8 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceBg,
                               borderRadius: BorderRadius.circular(4),
@@ -212,7 +230,10 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                       ),
                       const SizedBox(height: 6),
                       Obx(() => Text(
-                            currencyCtrl.formatPrice(_ticket.price3Day),
+                            (_ticket.startingPrice == null
+                                ? 'Not Available'
+                                : currencyCtrl
+                                    .formatPrice(_ticket.startingPrice!)),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -220,11 +241,15 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                             ),
                           )),
                       Obx(() {
-                        final equiv = currencyCtrl.formatSgdEquivalent(_ticket.price3Day);
+                        if (_ticket.startingPrice == null)
+                          return const SizedBox.shrink();
+                        final equiv = currencyCtrl
+                            .formatSgdEquivalent(_ticket.startingPrice!);
                         if (equiv.isEmpty) return const SizedBox.shrink();
                         return Text(
                           equiv,
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                          style: const TextStyle(
+                              color: AppTheme.textMuted, fontSize: 11),
                         );
                       }),
                     ],
@@ -283,11 +308,14 @@ class _TicketDetailPageState extends State<TicketDetailPage>
             ),
             child: Column(
               children: [
-                _buildSpecItem(Icons.grid_view_rounded, 'Access Zones', 'Zone ${_ticket.zoneAccess}'),
+                _buildSpecItem(Icons.grid_view_rounded, 'Access Zones',
+                    'Zone ${_ticket.zoneAccess}'),
                 const Divider(color: AppTheme.cardBorder, height: 16),
-                _buildSpecItem(Icons.door_front_door_outlined, 'Preferred Gates', 'Gate ${_ticket.gates}'),
+                _buildSpecItem(Icons.door_front_door_outlined,
+                    'Preferred Gates', 'Gate ${_ticket.gates}'),
                 const Divider(color: AppTheme.cardBorder, height: 16),
-                _buildSpecItem(Icons.place_outlined, 'Track Location', _ticket.location),
+                _buildSpecItem(
+                    Icons.place_outlined, 'Track Location', _ticket.location),
               ],
             ),
           ),
@@ -297,12 +325,14 @@ class _TicketDetailPageState extends State<TicketDetailPage>
           // Description
           const Text(
             'About This Package',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             _ticket.description,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.5),
+            style: const TextStyle(
+                color: AppTheme.textMuted, fontSize: 14, height: 1.5),
           ),
 
           const SizedBox(height: 20),
@@ -310,7 +340,8 @@ class _TicketDetailPageState extends State<TicketDetailPage>
           // Benefits / Overview List
           const Text(
             'Package Benefits & Inclusions',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           ..._ticket.overview.map((benefit) => Padding(
@@ -318,12 +349,14 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 18),
+                    const Icon(Icons.check_circle_rounded,
+                        color: AppTheme.success, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         benefit,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 13, height: 1.4),
                       ),
                     ),
                   ],
@@ -340,9 +373,14 @@ class _TicketDetailPageState extends State<TicketDetailPage>
       children: [
         Icon(icon, size: 20, color: AppTheme.f1Red),
         const SizedBox(width: 12),
-        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+        Text(label,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
         const Spacer(),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -362,7 +400,8 @@ class _TicketDetailPageState extends State<TicketDetailPage>
         children: [
           const Text(
             'Session Breakdown & Pricing',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -401,15 +440,19 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isAvailable ? 'Grandstand reserved seat' : 'Not offered for single day',
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                        isAvailable
+                            ? 'Grandstand reserved seat'
+                            : 'Not offered for single day',
+                        style: const TextStyle(
+                            color: AppTheme.textMuted, fontSize: 11),
                       ),
                     ],
                   ),
                   Obx(() {
                     if (!isAvailable) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceBg,
                           borderRadius: BorderRadius.circular(6),
@@ -470,9 +513,13 @@ class _TicketDetailPageState extends State<TicketDetailPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('From', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                  const Text('From',
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                   Obx(() => Text(
-                        currencyCtrl.formatPrice(_ticket.price3Day),
+                        (_ticket.startingPrice == null
+                            ? 'Not Available'
+                            : currencyCtrl.formatPrice(_ticket.startingPrice!)),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -486,14 +533,22 @@ class _TicketDetailPageState extends State<TicketDetailPage>
               width: 170,
               height: 48,
               child: ElevatedButton(
-                onPressed: _ticket.isAvailable ? _onBuyPressed : null,
+                onPressed:
+                    (_ticket.isAvailable && _ticket.availableDays.isNotEmpty)
+                        ? _onBuyPressed
+                        : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.f1Red,
                   disabledBackgroundColor: AppTheme.soldOut.withOpacity(0.4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
-                  _ticket.isAvailable ? 'BUY NOW' : 'SOLD OUT',
+                  !_ticket.isAvailable
+                      ? 'SOLD OUT'
+                      : (_ticket.availableDays.isEmpty
+                          ? 'NOT AVAILABLE'
+                          : 'BUY NOW'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,

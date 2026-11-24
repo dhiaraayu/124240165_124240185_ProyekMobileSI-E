@@ -252,8 +252,7 @@ class VenuePage extends GetView<VenueController> {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 'GPS LOCATION',
@@ -419,8 +418,7 @@ class VenuePage extends GetView<VenueController> {
                     horizontal: 16,
                   ),
                   itemCount: controller.nearbyGates.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = controller.nearbyGates[index];
                     final gate = item.gate;
@@ -433,8 +431,7 @@ class VenuePage extends GetView<VenueController> {
                         border: Border.all(color: borderColor),
                       ),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
@@ -442,8 +439,7 @@ class VenuePage extends GetView<VenueController> {
                                 padding: const EdgeInsets.all(11),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF242433),
-                                  borderRadius:
-                                      BorderRadius.circular(11),
+                                  borderRadius: BorderRadius.circular(11),
                                 ),
                                 child: const Icon(
                                   Icons.door_front_door_outlined,
@@ -454,8 +450,7 @@ class VenuePage extends GetView<VenueController> {
                               const SizedBox(width: 13),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       gate.name,
@@ -486,8 +481,7 @@ class VenuePage extends GetView<VenueController> {
                                     color: successColor.withValues(
                                       alpha: 0.12,
                                     ),
-                                    borderRadius:
-                                        BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: const Text(
                                     'NEARBY',
@@ -537,8 +531,7 @@ class VenuePage extends GetView<VenueController> {
                                     color: borderColor,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
                               ),
@@ -608,8 +601,7 @@ class VenuePage extends GetView<VenueController> {
                         ),
                       ),
                       trailing: IconButton(
-                        onPressed: () =>
-                            controller.deleteReminder(reminder),
+                        onPressed: () => controller.deleteReminder(reminder),
                         icon: const Icon(
                           Icons.delete_outline,
                           color: Colors.redAccent,
@@ -749,11 +741,9 @@ class _CircuitMapState extends State<_CircuitMap> {
                     _mapButton(
                       Icons.add,
                       () {
-                        final matrix =
-                            _transformController.value.clone();
+                        final matrix = _transformController.value.clone();
 
-                        final currentScale =
-                            matrix.getMaxScaleOnAxis();
+                        final currentScale = matrix.getMaxScaleOnAxis();
 
                         if (currentScale < 5) {
                           matrix.scale(1.3);
@@ -765,11 +755,9 @@ class _CircuitMapState extends State<_CircuitMap> {
                     _mapButton(
                       Icons.remove,
                       () {
-                        final matrix =
-                            _transformController.value.clone();
+                        final matrix = _transformController.value.clone();
 
-                        final currentScale =
-                            matrix.getMaxScaleOnAxis();
+                        final currentScale = matrix.getMaxScaleOnAxis();
 
                         if (currentScale > 1) {
                           matrix.scale(0.77);
@@ -781,8 +769,7 @@ class _CircuitMapState extends State<_CircuitMap> {
                     _mapButton(
                       Icons.center_focus_strong,
                       () {
-                        _transformController.value =
-                            Matrix4.identity();
+                        _transformController.value = Matrix4.identity();
                       },
                     ),
                   ],
@@ -1002,8 +989,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
                 raceDates.length,
                 (index) {
                   final date = raceDates[index];
-                  final selected =
-                      selectedDate.day == date.day;
+                  final selected = selectedDate.day == date.day;
 
                   const days = ['FRI', 'SAT', 'SUN'];
 
@@ -1021,14 +1007,11 @@ class _ReminderSheetState extends State<ReminderSheet> {
                             vertical: 13,
                           ),
                           decoration: BoxDecoration(
-                            color: selected
-                                ? primaryRed
-                                : const Color(0xFF242433),
+                            color:
+                                selected ? primaryRed : const Color(0xFF242433),
                             borderRadius: BorderRadius.circular(11),
                             border: Border.all(
-                              color: selected
-                                  ? primaryRed
-                                  : borderColor,
+                              color: selected ? primaryRed : borderColor,
                             ),
                           ),
                           child: Column(

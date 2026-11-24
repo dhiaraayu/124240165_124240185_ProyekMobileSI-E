@@ -18,6 +18,7 @@ class AuthMiddleware extends GetMiddleware {
 
 class AppRoutes {
   static const String root = '/root';
+  static const String welcome = '/welcome';
   static const String ticketDetail = '/ticket-detail';
   static const String login = '/login';
   static const String checkout = '/checkout';
@@ -29,12 +30,20 @@ class AppRoutes {
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 200),
     ),
+    // Layar login pertama kali (bisa dilewati)
+    GetPage(
+      name: welcome,
+      page: () => const LoginPage(isWelcome: true),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
     GetPage(
       name: ticketDetail,
       page: () => const TicketDetailPage(),
       transition: Transition.rightToLeftWithFade,
       transitionDuration: const Duration(milliseconds: 250),
     ),
+    // Login dari tombol BUY (bisa ditutup)
     GetPage(
       name: login,
       page: () => const LoginPage(),

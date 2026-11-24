@@ -63,6 +63,18 @@ class TicketPackage {
     return price != null && price > 0;
   }
 
+  double? get startingPrice {
+    final prices = <double>[
+      if (price3Day > 0) price3Day,
+      if (priceFri != null && priceFri! > 0) priceFri!,
+      if (priceSat != null && priceSat! > 0) priceSat!,
+      if (priceSun != null && priceSun! > 0) priceSun!,
+    ];
+    if (prices.isEmpty) return null;
+    prices.sort();
+    return prices.first;
+  }
+
   List<String> get availableDays {
     final list = <String>[];
     if (price3Day > 0) list.add('3-Day');
@@ -104,7 +116,8 @@ class TicketPackage {
       priceFri: (map['priceFri'] as num?)?.toDouble(),
       priceSat: (map['priceSat'] as num?)?.toDouble(),
       priceSun: (map['priceSun'] as num?)?.toDouble(),
-      overview: (map['overview'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      overview:
+          (map['overview'] as List?)?.map((e) => e.toString()).toList() ?? [],
       description: map['description'] ?? '',
       imageAsset: map['imageAsset'] ?? '',
       status: map['status'] ?? 'available',

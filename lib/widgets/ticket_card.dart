@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/ticket_package.dart';
@@ -180,8 +179,7 @@ class TicketCard extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(20),
-                          onTap: () =>
-                              ticketCtrl.toggleWishlist(ticket.id),
+                          onTap: () => ticketCtrl.toggleWishlist(ticket.id),
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
@@ -189,12 +187,8 @@ class TicketCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isWish
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isWish
-                                  ? AppTheme.f1Red
-                                  : Colors.white70,
+                              isWish ? Icons.favorite : Icons.favorite_border,
+                              color: isWish ? AppTheme.f1Red : Colors.white70,
                               size: 18,
                             ),
                           ),
@@ -273,20 +267,23 @@ class TicketCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Starting from',
+                              Text(
+                                ticket.startingPrice == null
+                                    ? 'Price unavailable'
+                                    : 'Starting from',
                                 style: TextStyle(
                                   color: AppTheme.textMuted,
                                   fontSize: 10,
                                 ),
                               ),
                               const SizedBox(height: 2),
-
                               Obx(
                                 () => Text(
-                                  currencyCtrl.formatPrice(
-                                    ticket.price3Day,
-                                  ),
+                                  ticket.startingPrice == null
+                                      ? 'Not Available'
+                                      : currencyCtrl.formatPrice(
+                                          ticket.startingPrice!,
+                                        ),
                                   style: TextStyle(
                                     color: ticket.isAvailable
                                         ? AppTheme.textWhite
@@ -299,11 +296,12 @@ class TicketCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-
                               Obx(() {
-                                final equiv =
-                                    currencyCtrl.formatSgdEquivalent(
-                                  ticket.price3Day,
+                                if (ticket.startingPrice == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                final equiv = currencyCtrl.formatSgdEquivalent(
+                                  ticket.startingPrice!,
                                 );
 
                                 if (equiv.isEmpty) {
@@ -324,9 +322,7 @@ class TicketCard extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(width: 8),
-
                         InkWell(
                           onTap: onMorePressed ?? onTap,
                           borderRadius: BorderRadius.circular(8),

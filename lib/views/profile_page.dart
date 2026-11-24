@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -163,7 +162,7 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       _buildStatItem(
                         'ORDERS',
-                        '${orderCtrl.orders.length}',
+                        '${orderCtrl.orders.where((o) => o.status != 'cancelled').length}',
                       ),
                       Container(
                         width: 1,
@@ -174,7 +173,9 @@ class ProfilePage extends StatelessWidget {
                         'TICKETS',
                         '${orderCtrl.orders.fold<int>(
                           0,
-                          (sum, item) => sum + item.quantity,
+                          (sum, item) =>
+                              sum +
+                              (item.status == 'cancelled' ? 0 : item.quantity),
                         )}',
                       ),
                       Container(
@@ -298,8 +299,7 @@ class ProfilePage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () =>
-                        _showLogoutDialog(context, authCtrl),
+                    onPressed: () => _showLogoutDialog(context, authCtrl),
                   ),
                 ),
 

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -50,8 +49,7 @@ class FavoritesPage extends StatelessWidget {
 
         final favorites = ticketCtrl.tickets
             .where(
-              (ticket) =>
-                  ticketCtrl.wishlistedIds.contains(ticket.id),
+              (ticket) => ticketCtrl.wishlistedIds.contains(ticket.id),
             )
             .toList();
 

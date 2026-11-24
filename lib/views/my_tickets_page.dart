@@ -23,7 +23,6 @@ class MyTicketsPage extends StatelessWidget {
           return _buildGuestPrompt();
         }
 
-        orderCtrl.loadOrders();
         final orders = orderCtrl.orders;
 
         if (orders.isEmpty) {
@@ -38,7 +37,8 @@ class MyTicketsPage extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              return _buildTicketOrderCard(context, order, orderCtrl, currencyCtrl);
+              return _buildTicketOrderCard(
+                  context, order, orderCtrl, currencyCtrl);
             },
           ),
         );
@@ -60,18 +60,23 @@ class MyTicketsPage extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.cardBorder),
               ),
-              child: const Icon(Icons.confirmation_number_outlined, size: 48, color: AppTheme.f1Red),
+              child: const Icon(Icons.confirmation_number_outlined,
+                  size: 48, color: AppTheme.f1Red),
             ),
             const SizedBox(height: 20),
             const Text(
               'Sign In to View Your Tickets',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
               'Your booked passes, grandstand reservations, and reminders are tied to your personal account.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 13, height: 1.4),
+              style: TextStyle(
+                  color: AppTheme.textMuted, fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 24),
             AppButton(
@@ -92,11 +97,15 @@ class MyTicketsPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.airplane_ticket_outlined, size: 54, color: AppTheme.textMuted.withOpacity(0.5)),
+            Icon(Icons.airplane_ticket_outlined,
+                size: 54, color: AppTheme.textMuted.withOpacity(0.5)),
             const SizedBox(height: 16),
             const Text(
               'No Tickets Booked Yet',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -143,16 +152,22 @@ class MyTicketsPage extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.success,
+                      decoration: BoxDecoration(
+                        color: order.status == 'cancelled'
+                            ? AppTheme.soldOut
+                            : AppTheme.success,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'CONFIRMED & ACTIVE',
+                    Text(
+                      order.status == 'cancelled'
+                          ? 'CANCELLED'
+                          : 'CONFIRMED & ACTIVE',
                       style: TextStyle(
-                        color: AppTheme.success,
+                        color: order.status == 'cancelled'
+                            ? AppTheme.soldOut
+                            : AppTheme.success,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
@@ -162,7 +177,8 @@ class MyTicketsPage extends StatelessWidget {
                 ),
                 Text(
                   dateFormat.format(order.createdAt),
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                  style:
+                      const TextStyle(color: AppTheme.textMuted, fontSize: 11),
                 ),
               ],
             ),
@@ -191,11 +207,13 @@ class MyTicketsPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppTheme.f1Red.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppTheme.f1Red.withOpacity(0.3)),
+                              border: Border.all(
+                                  color: AppTheme.f1Red.withOpacity(0.3)),
                             ),
                             child: Text(
                               order.attendance,
@@ -212,17 +230,18 @@ class MyTicketsPage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          currencyCtrl.formatPrice(order.totalPriceSGD),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        Obx(() => Text(
+                              currencyCtrl.formatPrice(order.totalPriceSGD),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            )),
                         Text(
                           '${order.quantity} x Tickets',
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                          style: const TextStyle(
+                              color: AppTheme.textMuted, fontSize: 11),
                         ),
                       ],
                     ),
@@ -236,12 +255,16 @@ class MyTicketsPage extends StatelessWidget {
                 // Attendee Info
                 Row(
                   children: [
-                    const Icon(Icons.person_outline, size: 16, color: AppTheme.textMuted),
+                    const Icon(Icons.person_outline,
+                        size: 16, color: AppTheme.textMuted),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Holder: ${order.attendeeName}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -251,29 +274,33 @@ class MyTicketsPage extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                // KELOLA Button -> Opens "08 Kelola Tiket" Bottom Sheet
-                SizedBox(
-                  width: double.infinity,
-                  height: 42,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.settings_outlined, size: 16, color: AppTheme.textWhite),
-                    label: const Text(
-                      'KELOLA TIKET',
-                      style: TextStyle(
-                        color: AppTheme.textWhite,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                // Cancelled orders remain visible as history and cannot be edited.
+                if (order.status != 'cancelled')
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.settings_outlined,
+                          size: 16, color: AppTheme.textWhite),
+                      label: const Text(
+                        'KELOLA TIKET',
+                        style: TextStyle(
+                          color: AppTheme.textWhite,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.cardBorder),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: AppTheme.surfaceBg,
+                      ),
+                      onPressed: () => _openManageTicketBottomSheet(
+                          context, order, orderCtrl),
                     ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.cardBorder),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      backgroundColor: AppTheme.surfaceBg,
-                    ),
-                    onPressed: () => _openManageTicketBottomSheet(context, order, orderCtrl),
                   ),
-                ),
               ],
             ),
           ),
@@ -289,7 +316,6 @@ class MyTicketsPage extends StatelessWidget {
     OrderController orderCtrl,
   ) {
     final nameCtrl = TextEditingController(text: order.attendeeName);
-    var currentQty = order.quantity;
 
     showModalBottomSheet(
       context: context,
@@ -339,48 +365,39 @@ class MyTicketsPage extends StatelessWidget {
               // Update Attendee Name
               const Text(
                 'Ticket Holder Name',
-                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: nameCtrl,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.edit_outlined, color: AppTheme.textMuted),
+                  prefixIcon:
+                      Icon(Icons.edit_outlined, color: AppTheme.textMuted),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Update Quantity
+              // Quantity is fixed after purchase; changing it requires a payment/refund flow.
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Ticket Quantity',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.cardBorder),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove, size: 16),
-                          onPressed: currentQty > 1
-                              ? () => setModalState(() => currentQty--)
-                              : null,
-                        ),
-                        Text('$currentQty', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        IconButton(
-                          icon: const Icon(Icons.add, size: 16),
-                          onPressed: currentQty < 10
-                              ? () => setModalState(() => currentQty++)
-                              : null,
-                        ),
-                      ],
+                  ),
+                  Text(
+                    '${order.quantity}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -392,14 +409,24 @@ class MyTicketsPage extends StatelessWidget {
               AppButton(
                 text: 'Save Changes',
                 onPressed: () async {
-                  if (nameCtrl.text.trim().isEmpty) return;
-                  final navigator = Navigator.of(ctx);
-                  await orderCtrl.updateTicket(
+                  if (nameCtrl.text.trim().isEmpty) {
+                    Get.snackbar(
+                      'Name Required',
+                      'Please enter the ticket holder name.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppTheme.f1Red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+                  final success = await orderCtrl.updateTicket(
                     orderId: order.id,
                     newAttendeeName: nameCtrl.text.trim(),
-                    newQuantity: currentQty,
+                    newQuantity: order.quantity,
                   );
-                  navigator.pop();
+                  if (success && Navigator.of(ctx).canPop()) {
+                    Navigator.of(ctx).pop();
+                  }
                 },
               ),
 
@@ -410,10 +437,12 @@ class MyTicketsPage extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 child: TextButton.icon(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.redAccent, size: 18),
                   label: const Text(
-                    'Cancel & Refund Ticket',
-                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                    'Cancel Ticket',
+                    style: TextStyle(
+                        color: Colors.redAccent, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
                     Navigator.of(ctx).pop();
@@ -437,19 +466,22 @@ class MyTicketsPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.cardBg,
-        title: const Text('Cancel Ticket Booking?', style: TextStyle(color: Colors.white)),
+        title: const Text('Cancel Ticket Booking?',
+            style: TextStyle(color: Colors.white)),
         content: Text(
-          'Are you sure you want to cancel your ${order.packageName} booking? Your scheduled race reminders will also be cancelled.',
+          'Are you sure you want to cancel your ${order.packageName} booking? The order will remain in your history, but no automatic refund will be processed.',
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         actions: [
           TextButton(
-            child: const Text('Keep Ticket', style: TextStyle(color: AppTheme.textMuted)),
+            child: const Text('Keep Ticket',
+                style: TextStyle(color: AppTheme.textMuted)),
             onPressed: () => Navigator.of(ctx).pop(),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Yes, Cancel Booking', style: TextStyle(color: Colors.white)),
+            child: const Text('Yes, Cancel Booking',
+                style: TextStyle(color: Colors.white)),
             onPressed: () async {
               Navigator.of(ctx).pop();
               await orderCtrl.cancelTicket(order.id);

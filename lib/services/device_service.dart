@@ -56,7 +56,8 @@ class DeviceService {
       id: 'gate-1',
       name: 'Gate 1 (Republic Blvd)',
       location: 'Republic Blvd / Turn 1',
-      description: 'Main access for Super Pit, Pit, Turn 1 & Turn 2 Grandstands.',
+      description:
+          'Main access for Super Pit, Pit, Turn 1 & Turn 2 Grandstands.',
       latitude: 1.2917,
       longitude: 103.8619,
     ),
@@ -64,7 +65,8 @@ class DeviceService {
       id: 'gate-2',
       name: 'Gate 2 (Promenade)',
       location: 'Beside Singapore Flyer',
-      description: 'Convenient entrance from Promenade MRT Station (Circle & Downtown lines).',
+      description:
+          'Convenient entrance from Promenade MRT Station (Circle & Downtown lines).',
       latitude: 1.2894,
       longitude: 103.8631,
     ),
@@ -72,7 +74,8 @@ class DeviceService {
       id: 'gate-3',
       name: 'Gate 3 (Marina Centre)',
       location: 'Raffles Blvd / Millenia Walk',
-      description: 'Short walk from Esplanade MRT. Direct access to Zone 1 and Zone 2.',
+      description:
+          'Short walk from Esplanade MRT. Direct access to Zone 1 and Zone 2.',
       latitude: 1.2935,
       longitude: 103.8580,
     ),
@@ -80,7 +83,8 @@ class DeviceService {
       id: 'gate-4',
       name: 'Gate 4 (Padang / St. Andrew)',
       location: 'St. Andrew\'s Road / Padang',
-      description: 'Prime access for Padang Grandstand and headline concerts at Padang Stage.',
+      description:
+          'Prime access for Padang Grandstand and headline concerts at Padang Stage.',
       latitude: 1.2905,
       longitude: 103.8530,
     ),
@@ -88,7 +92,8 @@ class DeviceService {
       id: 'gate-5',
       name: 'Gate 5 (National Gallery)',
       location: 'Fullerton Rd / Supreme Court',
-      description: 'Close to City Hall MRT Station. Access to Zone 4 walkabout and Empress.',
+      description:
+          'Close to City Hall MRT Station. Access to Zone 4 walkabout and Empress.',
       latitude: 1.2890,
       longitude: 103.8518,
     ),
@@ -104,7 +109,8 @@ class DeviceService {
       id: 'gate-7',
       name: 'Gate 7 (Empress Lawn)',
       location: 'Victoria Theatre & Concert Hall',
-      description: 'Direct gate for Empress Grandstand and historic civic district.',
+      description:
+          'Direct gate for Empress Grandstand and historic civic district.',
       latitude: 1.2878,
       longitude: 103.8525,
     ),
@@ -112,7 +118,8 @@ class DeviceService {
       id: 'gate-8',
       name: 'Gate 8 (Marina Bay Waterfront)',
       location: 'Helix Bridge / Marina Bay',
-      description: 'Direct entrance from Bayfront MRT (Marina Bay Sands & Bayfront Grandstand).',
+      description:
+          'Direct entrance from Bayfront MRT (Marina Bay Sands & Bayfront Grandstand).',
       latitude: 1.2845,
       longitude: 103.8600,
     ),
@@ -121,7 +128,8 @@ class DeviceService {
   static Future<void> init() async {
     try {
       tz.initializeTimeZones();
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
       const initSettings = InitializationSettings(android: androidSettings);
 
       await _notificationsPlugin.initialize(
@@ -131,11 +139,7 @@ class DeviceService {
         },
       );
 
-      // Request notification permissions for Android 13+
-      final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      await androidImplementation?.requestNotificationsPermission();
-      await androidImplementation?.requestExactAlarmsPermission();
+      // Permissions are requested only when the user explicitly enables a reminder.
     } catch (_) {}
   }
 
@@ -166,28 +170,42 @@ class DeviceService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    try {
-      final tzScheduled = tz.TZDateTime.from(scheduledDate, tz.local);
-      const androidDetails = AndroidNotificationDetails(
-        'f1_race_reminders',
-        'F1 Race Reminders',
-        channelDescription: 'Scheduled reminders for race weekend & gates',
-        importance: Importance.max,
-        priority: Priority.high,
-      );
-      const notificationDetails = NotificationDetails(android: androidDetails);
+    final androidImplementation =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    final notificationPermission =
+        await androidImplementation?.requestNotificationsPermission() ?? true;
+    if (!notificationPermission) {
+      throw Exception('Notification permission was not granted.');
+    }
 
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzScheduled,
-        notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-    } catch (_) {}
+    final permissionGranted =
+        await androidImplementation?.requestExactAlarmsPermission() ?? true;
+    if (!permissionGranted) {
+      throw Exception(
+          'Exact alarm permission was not granted. Please enable Alarms & reminders in Settings.');
+    }
+
+    final tzScheduled = tz.TZDateTime.from(scheduledDate, tz.local);
+    const androidDetails = AndroidNotificationDetails(
+      'f1_race_reminders',
+      'F1 Race Reminders',
+      channelDescription: 'Scheduled reminders for race weekend & gates',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const notificationDetails = NotificationDetails(android: androidDetails);
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzScheduled,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
   // Demo: Test notification in 10 seconds
@@ -258,6 +276,7 @@ class DeviceService {
       );
       return gate.copyWithDistance(distance);
     }).toList()
-      ..sort((a, b) => (a.distanceMeters ?? 0).compareTo(b.distanceMeters ?? 0));
+      ..sort(
+          (a, b) => (a.distanceMeters ?? 0).compareTo(b.distanceMeters ?? 0));
   }
 }

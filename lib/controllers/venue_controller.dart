@@ -34,8 +34,7 @@ class VenueController extends GetxController {
 
   final Rxn<Position> currentPosition = Rxn<Position>();
 
-  final RxList<GateDistance> nearbyGates =
-      <GateDistance>[].obs;
+  final RxList<GateDistance> nearbyGates = <GateDistance>[].obs;
 
   final RxList<Map> reminders = <Map>[].obs;
 
@@ -48,14 +47,11 @@ class VenueController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   Box? _reminderBox;
-
-  @override
-  void onInit() {
-    super.onInit();
-    initializeVenue();
-  }
+  bool _initialized = false;
 
   Future<void> initializeVenue() async {
+    if (_initialized || isLoading.value) return;
+    _initialized = true;
     try {
       await notifications.initialize();
 
@@ -67,6 +63,7 @@ class VenueController extends GetxController {
 
       await refreshLocation();
     } catch (e) {
+      _initialized = false;
       errorMessage.value = 'Unable to initialize Venue services.';
     }
   }
@@ -75,9 +72,7 @@ class VenueController extends GetxController {
     if (_reminderBox == null) return;
 
     reminders.assignAll(
-      _reminderBox!.values
-          .whereType<Map>()
-          .toList(),
+      _reminderBox!.values.whereType<Map>().toList(),
     );
   }
 
@@ -86,23 +81,20 @@ class VenueController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
         locationDisabled.value = true;
         hasPermission.value = false;
 
-        errorMessage.value =
-            'Please enable location services on your device.';
+        errorMessage.value = 'Please enable location services on your device.';
 
         return;
       }
 
       locationDisabled.value = false;
 
-      LocationPermission permission =
-          await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -117,8 +109,7 @@ class VenueController extends GetxController {
       if (permission == LocationPermission.deniedForever) {
         hasPermission.value = false;
 
-        errorMessage.value =
-            'Location permission is permanently denied.';
+        errorMessage.value = 'Location permission is permanently denied.';
 
         return;
       }
@@ -127,7 +118,9 @@ class VenueController extends GetxController {
 
       // Compatible with Geolocator versions that do not expose
       // the locationSettings named parameter.
-      final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition(
+        timeLimit: const Duration(seconds: 10),
+      );
 
       currentPosition.value = position;
 
@@ -178,9 +171,7 @@ class VenueController extends GetxController {
       throw Exception('Please select a future date and time.');
     }
 
-    final id = DateTime.now()
-        .microsecondsSinceEpoch
-        .remainder(2147483647);
+    final id = DateTime.now().microsecondsSinceEpoch.remainder(2147483647);
 
     await notifications.scheduleReminder(
       id: id,

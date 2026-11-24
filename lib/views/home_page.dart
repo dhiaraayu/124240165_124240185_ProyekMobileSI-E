@@ -71,7 +71,8 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                     Obx(() => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppTheme.surfaceBg,
                             borderRadius: BorderRadius.circular(8),
@@ -113,7 +114,8 @@ class HomePage extends StatelessWidget {
 
                   return ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final item = list[index];
@@ -171,10 +173,13 @@ class HomePage extends StatelessWidget {
                   SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.f1Red),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppTheme.f1Red),
                   ),
                   SizedBox(width: 10),
-                  Text('Loading Marina Bay live weather...', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  Text('Loading Marina Bay live weather...',
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                 ],
               ),
             ),
@@ -194,7 +199,8 @@ class HomePage extends StatelessWidget {
                     color: AppTheme.surfaceBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(w?.icon ?? '☀️', style: const TextStyle(fontSize: 22)),
+                  child: Text(w?.icon ?? '☀️',
+                      style: const TextStyle(fontSize: 22)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -222,11 +228,13 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.success.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppTheme.success.withOpacity(0.4)),
+                    border:
+                        Border.all(color: AppTheme.success.withOpacity(0.4)),
                   ),
                   child: const Text(
                     'LIVE SGT',
@@ -297,7 +305,8 @@ class HomePage extends StatelessWidget {
               side: BorderSide(
                 color: isSelected ? AppTheme.f1Red : AppTheme.cardBorder,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               showCheckmark: false,
             );
           });
@@ -332,11 +341,14 @@ class HomePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _buildScheduleRow('Friday, 8 Oct', 'Practice 1 & 2', '17:30 & 21:00 SGT'),
+          _buildScheduleRow(
+              'Friday, 8 Oct', 'Practice 1 & 2', '17:30 & 21:00 SGT'),
           const Divider(color: AppTheme.cardBorder, height: 16),
-          _buildScheduleRow('Saturday, 9 Oct', 'Practice 3 & Qualifying', '17:30 & 21:00 SGT'),
+          _buildScheduleRow('Saturday, 9 Oct', 'Practice 3 & Qualifying',
+              '17:30 & 21:00 SGT'),
           const Divider(color: AppTheme.cardBorder, height: 16),
-          _buildScheduleRow('Sunday, 10 Oct', 'Singapore Grand Prix (62 Laps)', '20:00 SGT'),
+          _buildScheduleRow(
+              'Sunday, 10 Oct', 'Singapore Grand Prix (62 Laps)', '20:00 SGT'),
         ],
       ),
     );
@@ -351,7 +363,10 @@ class HomePage extends StatelessWidget {
           children: [
             Text(
               day,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold),
             ),
             Text(
               event,
@@ -361,7 +376,8 @@ class HomePage extends StatelessWidget {
         ),
         Text(
           time,
-          style: const TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+              color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ],
     );

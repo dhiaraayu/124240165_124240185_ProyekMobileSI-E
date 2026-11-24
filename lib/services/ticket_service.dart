@@ -34,7 +34,8 @@ class TicketService {
             'S\$100 food vouchers for use across the 3 days',
             '6 drink vouchers per day',
           ],
-          description: 'Upper deck with direct views of pit lane, starting grid, and podium ceremony.',
+          description:
+              'Upper deck with direct views of pit lane, starting grid, and podium ceremony.',
           imageAsset: 'assets/images/super-pit.jpg',
           status: 'available',
           featured: true,
@@ -49,7 +50,8 @@ class TicketService {
   }
 
   List<TicketPackage> getFeaturedTickets() {
-    final list = LocalService.ticketsBox.values.where((t) => t.featured).toList();
+    final list =
+        LocalService.ticketsBox.values.where((t) => t.featured).toList();
     if (list.isEmpty) {
       return LocalService.ticketsBox.values.take(5).toList();
     }

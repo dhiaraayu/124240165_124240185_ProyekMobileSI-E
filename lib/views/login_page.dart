@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controllers/auth_controller.dart';
+import '../services/local_service.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  /// true = layar pertama saat app dibuka (ada tombol Lewati).
+  final bool isWelcome;
+
+  const LoginPage({super.key, this.isWelcome = false});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final _loginFormKey = GlobalKey<FormState>();
@@ -23,9 +29,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   final _regNameCtrl = TextEditingController();
   final _regEmailCtrl = TextEditingController();
   final _regPasswordCtrl = TextEditingController();
+  final _regConfirmCtrl = TextEditingController();
 
   bool _obscureLoginPassword = true;
   bool _obscureRegPassword = true;
+  bool _obscureRegConfirm = true;
+
+  static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   @override
   void initState() {
@@ -41,29 +51,89 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     _regNameCtrl.dispose();
     _regEmailCtrl.dispose();
     _regPasswordCtrl.dispose();
+    _regConfirmCtrl.dispose();
     super.dispose();
   }
 
-  void _submitLogin() {
-    if (_loginFormKey.currentState!.validate()) {
-      final authCtrl = Get.find<AuthController>();
-      authCtrl.login(
-        _loginEmailCtrl.text.trim(),
-        _loginPasswordCtrl.text.trim(),
+  // ---------- Actions ----------
+
+  void _skip() {
+    LocalService.markWelcomeSeen();
+    Get.offAllNamed('/root');
+  }
+
+  Future<void> _submitLogin() async {
+    if (!_loginFormKey.currentState!.validate()) return;
+
+    final authCtrl = Get.find<AuthController>();
+
+    await authCtrl.login(
+      _loginEmailCtrl.text.trim(),
+      _loginPasswordCtrl.text,
+    );
+  }
+
+  Future<void> _submitRegister() async {
+    if (!_registerFormKey.currentState!.validate()) return;
+
+    final authCtrl = Get.find<AuthController>();
+    final email = _regEmailCtrl.text.trim();
+
+    final ok = await authCtrl.register(
+      _regNameCtrl.text.trim(),
+      email,
+      _regPasswordCtrl.text,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      // Register sukses: akun dibuat, tetapi user belum login.
+      _loginEmailCtrl.text = email;
+      _loginPasswordCtrl.clear();
+      _regPasswordCtrl.clear();
+      _regConfirmCtrl.clear();
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: AppTheme.cardBg,
+          title: const Text(
+            'Account Created Successfully!',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Your account has been created. Please sign in to continue.',
+            style: TextStyle(color: AppTheme.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('CONTINUE TO SIGN IN'),
+            ),
+          ],
+        ),
       );
+
+      if (!mounted) return;
+
+      _tabController.animateTo(0);
+      return;
+    }
+
+    // Email sudah dipakai -> pindah ke tab Sign In dengan email terisi.
+    if (authCtrl.lastRegisterEmailTaken) {
+      _loginEmailCtrl.text = email;
+      _loginPasswordCtrl.clear();
+      _tabController.animateTo(0);
     }
   }
 
-  void _submitRegister() {
-    if (_registerFormKey.currentState!.validate()) {
-      final authCtrl = Get.find<AuthController>();
-      authCtrl.register(
-        _regNameCtrl.text.trim(),
-        _regEmailCtrl.text.trim(),
-        _regPasswordCtrl.text.trim(),
-      );
-    }
-  }
+  // ---------- UI ----------
 
   @override
   Widget build(BuildContext context) {
@@ -71,84 +141,108 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('04 Sign In / Register'),
+        title: const Text('Sign In / Register'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.isWelcome
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => Get.back(),
+              ),
+        actions: widget.isWelcome
+            ? [
+                TextButton(
+                  onPressed: _skip,
+                  child: const Text(
+                    'Lewati',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Header Info
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.f1Red,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'F1 SINGAPORE GP TICKETING',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Access Your Tickets & Bookings',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Tab Selector
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppTheme.cardBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.cardBorder),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Sign In'),
-                  Tab(text: 'Register'),
-                ],
-              ),
-            ),
-
+            _buildHeader(),
+            _buildTabSelector(),
             const SizedBox(height: 12),
-
-            // Tab Views
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Sign In Tab
                   _buildSignInTab(authCtrl),
-
-                  // Register Tab
                   _buildRegisterTab(authCtrl),
                 ],
               ),
             ),
+            if (widget.isWelcome)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TextButton(
+                  onPressed: _skip,
+                  child: const Text(
+                    'Lanjut tanpa akun',
+                    style: TextStyle(color: AppTheme.textMuted),
+                  ),
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.f1Red,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'F1 SINGAPORE GP TICKETING',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 10,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Access Your Tickets & Bookings',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        tabs: const [
+          Tab(text: 'Sign In'),
+          Tab(text: 'Register'),
+        ],
       ),
     );
   }
@@ -167,11 +261,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 labelText: 'Email Address',
-                prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted),
+                prefixIcon: Icon(
+                  Icons.email_outlined,
+                  color: AppTheme.textMuted,
+                ),
               ),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'Enter your email';
-                if (!val.contains('@')) return 'Enter a valid email';
+                final v = val?.trim() ?? '';
+                if (v.isEmpty) return 'Enter your email';
+                if (!_emailRegex.hasMatch(v)) {
+                  return 'Enter a valid email';
+                }
                 return null;
               },
             ),
@@ -182,43 +282,35 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: AppTheme.textMuted,
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureLoginPassword ? Icons.visibility_off : Icons.visibility,
+                    _obscureLoginPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: AppTheme.textMuted,
                   ),
-                  onPressed: () => setState(() => _obscureLoginPassword = !_obscureLoginPassword),
+                  onPressed: () => setState(
+                    () => _obscureLoginPassword = !_obscureLoginPassword,
+                  ),
                 ),
               ),
               validator: (val) {
-                if (val == null || val.length < 4) return 'Password must be at least 4 characters';
+                if (val == null || val.isEmpty) {
+                  return 'Enter your password';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 24),
-            Obx(() => AppButton(
-                  text: 'Sign In & Continue',
-                  isLoading: authCtrl.isLoading.value,
-                  onPressed: _submitLogin,
-                )),
-            const SizedBox(height: 20),
-
-            // Demo Quick Fill Helper for Aslab presentation
-            Center(
-              child: TextButton.icon(
-                icon: const Icon(Icons.bolt, color: AppTheme.gold, size: 16),
-                label: const Text(
-                  'Quick Fill Demo Account',
-                  style: TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  _loginEmailCtrl.text = 'fan@singaporegp.sg';
-                  _loginPasswordCtrl.text = 'f1gp2027';
-                  _regNameCtrl.text = 'Alex Verstappen';
-                  _regEmailCtrl.text = 'fan@singaporegp.sg';
-                  _regPasswordCtrl.text = 'f1gp2027';
-                },
+            Obx(
+              () => AppButton(
+                text: 'Sign In & Continue',
+                isLoading: authCtrl.isLoading.value,
+                onPressed: _submitLogin,
               ),
             ),
           ],
@@ -237,13 +329,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           children: [
             TextFormField(
               controller: _regNameCtrl,
+              textCapitalization: TextCapitalization.words,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 labelText: 'Full Name',
-                prefixIcon: Icon(Icons.person_outline, color: AppTheme.textMuted),
+                prefixIcon: Icon(
+                  Icons.person_outline,
+                  color: AppTheme.textMuted,
+                ),
               ),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'Enter your full name';
+                if (val == null || val.trim().isEmpty) {
+                  return 'Enter your full name';
+                }
                 return null;
               },
             ),
@@ -254,11 +352,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 labelText: 'Email Address',
-                prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted),
+                prefixIcon: Icon(
+                  Icons.email_outlined,
+                  color: AppTheme.textMuted,
+                ),
               ),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'Enter your email';
-                if (!val.contains('@')) return 'Enter a valid email';
+                final v = val?.trim() ?? '';
+                if (v.isEmpty) return 'Enter your email';
+                if (!_emailRegex.hasMatch(v)) {
+                  return 'Enter a valid email';
+                }
                 return null;
               },
             ),
@@ -269,26 +373,68 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Create Password',
-                prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
+                helperText: 'Minimum 6 characters',
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: AppTheme.textMuted,
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureRegPassword ? Icons.visibility_off : Icons.visibility,
+                    _obscureRegPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: AppTheme.textMuted,
                   ),
-                  onPressed: () => setState(() => _obscureRegPassword = !_obscureRegPassword),
+                  onPressed: () => setState(
+                    () => _obscureRegPassword = !_obscureRegPassword,
+                  ),
                 ),
               ),
               validator: (val) {
-                if (val == null || val.length < 4) return 'Password must be at least 4 characters';
+                if (val == null || val.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _regConfirmCtrl,
+              obscureText: _obscureRegConfirm,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: AppTheme.textMuted,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureRegConfirm
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: AppTheme.textMuted,
+                  ),
+                  onPressed: () => setState(
+                    () => _obscureRegConfirm = !_obscureRegConfirm,
+                  ),
+                ),
+              ),
+              validator: (val) {
+                if (val != _regPasswordCtrl.text) {
+                  return 'Passwords do not match';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 24),
-            Obx(() => AppButton(
-                  text: 'Create Account & Continue',
-                  isLoading: authCtrl.isLoading.value,
-                  onPressed: _submitRegister,
-                )),
+            Obx(
+              () => AppButton(
+                text: 'Create Account & Continue',
+                isLoading: authCtrl.isLoading.value,
+                onPressed: _submitRegister,
+              ),
+            ),
           ],
         ),
       ),

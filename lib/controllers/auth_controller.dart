@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/auth_service.dart';
 import '../services/local_service.dart';
+import '../theme.dart';
+import 'order_controller.dart';
+import 'ticket_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -12,7 +15,7 @@ class AuthController extends GetxController {
   final currentUserEmail = ''.obs;
   final isLoading = false.obs;
 
-  // Stored pending action for guest detour flow
+  /// Aksi yang tertunda saat user tamu menekan BUY (mis. buka checkout).
   VoidCallback? _pendingAction;
 
   @override
@@ -28,114 +31,133 @@ class AuthController extends GetxController {
     currentUserEmail.value = LocalService.currentUserEmail ?? '';
   }
 
-  // Auth Gate: Check login, if not redirect to login and resume action on success
+  /// Muat ulang data milik user (tiket & wishlist) setelah login/logout.
+  void _refreshUserData() {
+    if (Get.isRegistered<OrderController>()) {
+      Get.find<OrderController>().loadOrders();
+    }
+    if (Get.isRegistered<TicketController>()) {
+      Get.find<TicketController>().refreshWishlist();
+    }
+  }
+
+  void _snack(String title, String message, Color color) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: color,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  /// Auth gate: kalau sudah login langsung jalankan [onSuccess],
+  /// kalau belum -> buka halaman login, lalu lanjutkan setelah berhasil.
   void requireLogin({required VoidCallback onSuccess, String? message}) {
     if (isLoggedIn.value) {
       onSuccess();
-    } else {
-      _pendingAction = onSuccess;
-      if (message != null && message.isNotEmpty) {
-        Get.snackbar(
-          'Sign In Required',
-          message,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF1A1B26),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      }
-      Get.toNamed('/login');
+      return;
     }
+
+    _pendingAction = onSuccess;
+
+    if (message != null && message.isNotEmpty) {
+      _snack('Sign In Required', message, AppTheme.cardBg);
+    }
+    Get.toNamed('/login');
+  }
+
+  /// Dipanggil setelah login/register berhasil.
+  void _finishAuth() {
+    LocalService.markWelcomeSeen();
+
+    // Datang dari layar awal (welcome): tidak ada halaman sebelumnya,
+    // jadi pindah ke beranda.
+    if (Get.currentRoute == '/welcome') {
+      _pendingAction = null;
+      Get.offAllNamed('/root');
+      return;
+    }
+
+    // Datang dari tombol BUY: tutup halaman login, lanjutkan aksi (checkout).
+    final action = _pendingAction;
+    _pendingAction = null;
+    Get.back(closeOverlays: true);
+    action?.call();
   }
 
   Future<bool> login(String email, String password) async {
-    try {
-      isLoading.value = true;
-      final user = await _authService.login(email: email, password: password);
-      syncSession();
-      Get.snackbar(
-        'Welcome Back!',
-        'Signed in as ${user.name}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF00D26A),
-        colorText: Colors.white,
-      );
+    if (isLoading.value) return false;
+    isLoading.value = true;
 
-      // Handle pending action or return
-      if (_pendingAction != null) {
-        final action = _pendingAction!;
-        _pendingAction = null;
-        Get.back(); // pop login
-        action();
-      } else {
-        Get.back();
-      }
-      return true;
-    } catch (e) {
-      Get.snackbar(
-        'Sign In Failed',
-        e.toString().replaceAll('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFE10600),
-        colorText: Colors.white,
-      );
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<bool> register(String name, String email, String password) async {
     try {
-      isLoading.value = true;
-      final user = await _authService.register(
-        name: name,
+      final user = await _authService.login(
         email: email,
         password: password,
       );
       syncSession();
-      Get.snackbar(
-        'Registration Successful!',
-        'Account created for ${user.name}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF00D26A),
-        colorText: Colors.white,
-      );
+      _refreshUserData();
 
-      if (_pendingAction != null) {
-        final action = _pendingAction!;
-        _pendingAction = null;
-        Get.back(); // pop login
-        action();
-      } else {
-        Get.back();
-      }
+      isLoading.value = false;
+      _finishAuth(); // navigasi dulu
+      _snack('Welcome Back!', 'Signed in as ${user.name}', AppTheme.success);
       return true;
     } catch (e) {
-      Get.snackbar(
-        'Registration Failed',
-        e.toString().replaceAll('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFE10600),
-        colorText: Colors.white,
-      );
-      return false;
-    } finally {
+      final msg = e is AuthException
+          ? e.message
+          : 'Something went wrong. Please try again.';
+      _snack('Sign In Failed', msg, AppTheme.f1Red);
       isLoading.value = false;
+      return false;
     }
+  }
+
+  /// Return true kalau berhasil. Kalau gagal karena email sudah dipakai,
+  /// halaman login akan mengecek [lastRegisterEmailTaken].
+  bool lastRegisterEmailTaken = false;
+
+  Future<bool> register(String name, String email, String password) async {
+    if (isLoading.value) return false;
+    isLoading.value = true;
+    lastRegisterEmailTaken = false;
+
+    try {
+      await _authService.register(
+        name: name,
+        email: email,
+        password: password,
+      );
+      // Register hanya membuat akun. Login dilakukan secara terpisah.
+    } catch (e) {
+      if (e is AuthException) {
+        lastRegisterEmailTaken = e.emailTaken;
+        _snack('Registration Failed', e.message, AppTheme.f1Red);
+      } else {
+        _snack(
+          'Registration Failed',
+          'Something went wrong. Please try again.',
+          AppTheme.f1Red,
+        );
+      }
+      isLoading.value = false;
+      return false;
+    }
+
+    isLoading.value = false;
+    return true;
   }
 
   Future<void> logout() async {
     await _authService.logout();
-    syncSession();
     _pendingAction = null;
+    syncSession();
+    _refreshUserData();
     Get.offAllNamed('/root');
-    Get.snackbar(
+    _snack(
       'Signed Out',
       'You have been logged out successfully.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF1A1B26),
-      colorText: Colors.white,
+      AppTheme.cardBg,
     );
   }
 }

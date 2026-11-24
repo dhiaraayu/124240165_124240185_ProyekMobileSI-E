@@ -3,6 +3,8 @@ import 'local_service.dart';
 import 'device_service.dart';
 
 class OrderService {
+  String? lastReminderError;
+
   // CREATE
   Future<Order> createOrder({
     required String userId,
@@ -13,6 +15,7 @@ class OrderService {
     required String attendeeName,
     required double totalPriceSGD,
   }) async {
+    lastReminderError = null;
     final int notifId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final String id = 'ord_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -36,7 +39,8 @@ class OrderService {
     await DeviceService.showNow(
       id: notifId,
       title: 'Order Confirmed! 🏎️',
-      body: '$quantity x $packageName ($attendance) has been booked successfully.',
+      body:
+          '$quantity x $packageName ($attendance) has been booked successfully.',
     );
 
     // Schedule race weekend reminders:
@@ -44,12 +48,16 @@ class OrderService {
     final raceDay = DateTime(2027, 10, 8, 9, 0);
     final reminderEve = raceDay.subtract(const Duration(days: 1));
     if (reminderEve.isAfter(DateTime.now())) {
-      await DeviceService.schedule(
-        id: notifId + 1,
-        title: 'F1 Singapore GP Tomorrow! 🏁',
-        body: 'Prepare your tickets for $packageName. Gates open tomorrow!',
-        scheduledDate: reminderEve,
-      );
+      try {
+        await DeviceService.schedule(
+          id: notifId + 1,
+          title: 'F1 Singapore GP Tomorrow! 🏁',
+          body: 'Prepare your tickets for $packageName. Gates open tomorrow!',
+          scheduledDate: reminderEve,
+        );
+      } catch (e) {
+        lastReminderError = e.toString().replaceFirst('Exception: ', '');
+      }
     }
 
     return order;
@@ -72,14 +80,18 @@ class OrderService {
     final order = LocalService.ordersBox.get(orderId);
     if (order == null) throw Exception('Order not found');
 
-    // Calculate unit price from existing order
-    final unitPrice = order.quantity > 0 ? (order.totalPriceSGD / order.quantity) : 0.0;
-    final newTotal = unitPrice * newQuantity;
+    if (newAttendeeName.trim().isEmpty) {
+      throw Exception('Ticket holder name cannot be empty.');
+    }
+    if (newQuantity != order.quantity) {
+      throw Exception('Ticket quantity cannot be changed after payment.');
+    }
+    if (order.status == 'cancelled') {
+      throw Exception('Cancelled orders cannot be edited.');
+    }
 
     final updated = order.copyWith(
       attendeeName: newAttendeeName.trim(),
-      quantity: newQuantity,
-      totalPriceSGD: newTotal,
     );
 
     await LocalService.ordersBox.put(orderId, updated);
@@ -94,8 +106,11 @@ class OrderService {
       await DeviceService.cancel(order.notifId);
       await DeviceService.cancel(order.notifId + 1);
 
-      // Remove from Hive
-      await LocalService.ordersBox.delete(orderId);
+      // Keep the order in history and mark it as cancelled.
+      await LocalService.ordersBox.put(
+        orderId,
+        order.copyWith(status: 'cancelled'),
+      );
     }
   }
 }

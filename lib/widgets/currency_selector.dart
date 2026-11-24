@@ -26,7 +26,8 @@ class CurrencySelector extends StatelessWidget {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: current,
-              icon: const Icon(Icons.arrow_drop_down, color: AppTheme.textWhite, size: 18),
+              icon: const Icon(Icons.arrow_drop_down,
+                  color: AppTheme.textWhite, size: 18),
               dropdownColor: AppTheme.surfaceBg,
               isDense: true,
               style: const TextStyle(
@@ -62,7 +63,8 @@ class CurrencySelector extends StatelessWidget {
               onTap: () => currencyCtrl.setCurrency(curr),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected ? AppTheme.f1Red : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),

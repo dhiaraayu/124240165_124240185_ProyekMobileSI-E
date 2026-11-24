@@ -83,7 +83,8 @@ class AirQualityData {
       advisory = 'Air quality is satisfactory. Ideal for race weekend.';
     } else if (pm25 <= 35.4) {
       status = 'Moderate (PSI 51-100)';
-      advisory = 'Acceptable air quality. Most people can engage in outdoor activities.';
+      advisory =
+          'Acceptable air quality. Most people can engage in outdoor activities.';
     } else if (pm25 <= 55.4) {
       status = 'Unhealthy (PSI 101-200)';
       advisory = 'Reduce prolonged intense outdoor exertion.';

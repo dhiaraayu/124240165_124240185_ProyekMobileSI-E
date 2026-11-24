@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'services/local_service.dart';
 import 'services/device_service.dart';
 import 'services/ticket_service.dart';
@@ -10,13 +11,13 @@ import 'theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Local Storage (Hive Flutter + SharedPreferences)
+  // 1. Local storage (Hive + SharedPreferences)
   await LocalService.init();
 
-  // 2. Initialize Local Notifications & Timezones
+  // 2. Notifikasi lokal & timezone
   await DeviceService.init();
 
-  // 3. Seed Ticket Packages from assets/data/tickets.json if empty
+  // 3. Seed paket tiket dari assets/data/tickets.json
   await TicketService().seedIfEmpty();
 
   runApp(const SgGpTicketsApp());
@@ -27,12 +28,19 @@ class SgGpTicketsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pertama kali buka & belum login -> layar login (bisa dilewati).
+    // Selain itu langsung ke beranda.
+    final String startRoute =
+        (LocalService.isLoggedIn || LocalService.welcomeSeen)
+            ? AppRoutes.root
+            : AppRoutes.welcome;
+
     return GetMaterialApp(
       title: 'SG GP Tickets 2027',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       initialBinding: InitialBindings(),
-      initialRoute: AppRoutes.root,
+      initialRoute: startRoute,
       getPages: AppRoutes.pages,
       defaultTransition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 200),

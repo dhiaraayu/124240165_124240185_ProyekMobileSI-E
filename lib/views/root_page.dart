@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -46,11 +45,7 @@ class _RootPageState extends State<RootPage> {
       _currentIndex = index;
     });
 
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-    );
+    _pageController.jumpToPage(index);
   }
 
   @override
@@ -97,7 +92,6 @@ class _RootPageState extends State<RootPage> {
           ),
         ],
       ),
-
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
@@ -106,14 +100,16 @@ class _RootPageState extends State<RootPage> {
             _currentIndex = index;
           });
         },
-        children: const [
-          HomePage(),
-          MyTicketsPage(),
-          VenuePage(),
-          ProfilePage(),
+        children: [
+          const HomePage(),
+          const MyTicketsPage(),
+          if (_currentIndex == 2)
+            const VenuePage()
+          else
+            const SizedBox.shrink(),
+          const ProfilePage(),
         ],
       ),
-
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppTheme.cardBg,

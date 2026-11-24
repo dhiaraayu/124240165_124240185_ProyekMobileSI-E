@@ -23,7 +23,8 @@ class LocalService {
 
     // Register Hive Adapters
     if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(AppUserAdapter());
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(TicketPackageAdapter());
+    if (!Hive.isAdapterRegistered(1))
+      Hive.registerAdapter(TicketPackageAdapter());
     if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(OrderAdapter());
 
     // Open Hive Boxes
@@ -64,5 +65,13 @@ class LocalService {
 
   static Future<void> setCurrency(String currency) async {
     await prefs.setString(keyCurrency, currency);
+  }
+
+  static const String keyWelcomeSeen = 'welcomeSeen';
+
+  static bool get welcomeSeen => prefs.getBool(keyWelcomeSeen) ?? false;
+
+  static Future<void> markWelcomeSeen() async {
+    await prefs.setBool(keyWelcomeSeen, true);
   }
 }

@@ -28,7 +28,8 @@ class TicketController extends GetxController {
   void refreshWishlist() {
     final authCtrl = Get.find<AuthController>();
     if (authCtrl.isLoggedIn.value) {
-      final list = _ticketService.getWishlistedTickets(authCtrl.currentUserId.value);
+      final list =
+          _ticketService.getWishlistedTickets(authCtrl.currentUserId.value);
       wishlistedIds.assignAll(list.map((t) => t.id).toSet());
     } else {
       wishlistedIds.clear();
