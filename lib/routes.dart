@@ -1,0 +1,52 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'services/local_service.dart';
+import 'views/root_page.dart';
+import 'views/ticket_detail_page.dart';
+import 'views/login_page.dart';
+import 'views/checkout_page.dart';
+
+class AuthMiddleware extends GetMiddleware {
+  @override
+  RouteSettings? redirect(String? route) {
+    if (!LocalService.isLoggedIn) {
+      return const RouteSettings(name: '/login');
+    }
+    return null;
+  }
+}
+
+class AppRoutes {
+  static const String root = '/root';
+  static const String ticketDetail = '/ticket-detail';
+  static const String login = '/login';
+  static const String checkout = '/checkout';
+
+  static final List<GetPage> pages = [
+    GetPage(
+      name: root,
+      page: () => const RootPage(),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: ticketDetail,
+      page: () => const TicketDetailPage(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: login,
+      page: () => const LoginPage(),
+      transition: Transition.downToUp,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: checkout,
+      page: () => const CheckoutPage(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+  ];
+}
