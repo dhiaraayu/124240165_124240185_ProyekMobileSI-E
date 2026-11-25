@@ -116,7 +116,7 @@ class OrderController extends GetxController {
     }
   }
 
-  // Cancel Order (Delete Ticket & Cancel Notifications)
+  // Cancel Order 
   Future<bool> cancelTicket(String orderId) async {
     try {
       isLoading.value = true;

@@ -15,7 +15,6 @@ class AuthController extends GetxController {
   final currentUserEmail = ''.obs;
   final isLoading = false.obs;
 
-  /// Aksi yang tertunda saat user tamu menekan BUY (mis. buka checkout).
   VoidCallback? _pendingAction;
 
   @override
@@ -52,8 +51,8 @@ class AuthController extends GetxController {
     );
   }
 
-  /// Auth gate: kalau sudah login langsung jalankan [onSuccess],
-  /// kalau belum -> buka halaman login, lalu lanjutkan setelah berhasil.
+  /// Auth gate kalau sudah login langsung jalankan [onSuccess],
+  /// kalau belum buka halaman login, lalu lanjutkan setelah berhasil.
   void requireLogin({required VoidCallback onSuccess, String? message}) {
     if (isLoggedIn.value) {
       onSuccess();
@@ -70,8 +69,7 @@ class AuthController extends GetxController {
 
   /// Dipanggil setelah login/register berhasil.
   void _finishAuth() {
-    // Datang dari alur onboarding: tidak ada halaman tujuan sebelumnya,
-    // jadi pindah ke beranda.
+   
     final route = Get.currentRoute;
     if (route == '/welcome' ||
         route == '/auth-choice' ||
@@ -81,7 +79,7 @@ class AuthController extends GetxController {
       return;
     }
 
-    // Datang dari tombol BUY: tutup halaman login, lanjutkan aksi (checkout).
+    // tutup halaman login, lanjutkan aksi (checkout).
     final action = _pendingAction;
     _pendingAction = null;
     Get.back(closeOverlays: true);
@@ -114,8 +112,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Return true kalau berhasil. Kalau gagal karena email sudah dipakai,
-  /// halaman login akan mengecek [lastRegisterEmailTaken].
   bool lastRegisterEmailTaken = false;
 
   Future<bool> register(String name, String email, String password) async {

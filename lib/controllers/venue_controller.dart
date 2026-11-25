@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import '../models/venue_gate.dart';
 import '../services/venue_notification_service.dart';
 
@@ -122,8 +121,6 @@ class VenueController extends GetxController {
 
       hasPermission.value = true;
 
-      // Compatible with Geolocator versions that do not expose
-      // the locationSettings named parameter.
       final position = await Geolocator.getCurrentPosition(
         timeLimit: const Duration(seconds: 10),
       );

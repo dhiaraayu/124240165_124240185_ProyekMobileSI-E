@@ -35,7 +35,7 @@ class _VideoBgHeroState extends State<VideoBgHero> {
         });
       }
     } catch (_) {
-      // Fallback gracefully to animated gradient background if video is not available or corrupted
+    
       _isVideoInitialized = false;
     }
   }

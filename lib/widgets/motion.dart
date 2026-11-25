@@ -95,7 +95,6 @@ class _FadeSlideInState extends State<FadeSlideIn>
   }
 }
 
-/// Berdenyut pelan (untuk placeholder saat memuat data).
 class Pulse extends StatefulWidget {
   final Widget child;
 

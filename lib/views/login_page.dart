@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../controllers/auth_controller.dart';
 import '../theme.dart';
 import '../widgets/app_button.dart';
@@ -61,7 +60,6 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  // ---------- Actions ----------
 
   void _skip() {
     // Guest: masuk ke beranda tanpa sesi login.
@@ -131,7 +129,7 @@ class _LoginPageState extends State<LoginPage>
       return;
     }
 
-    // Email sudah dipakai -> pindah ke tab Sign In dengan email terisi.
+    // Email sudah dipakai pindah ke tab Sign In dengan email terisi.
     if (authCtrl.lastRegisterEmailTaken) {
       _loginEmailCtrl.text = email;
       _loginPasswordCtrl.clear();
@@ -139,7 +137,7 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
-  // ---------- UI ----------
+  // UI 
 
   @override
   Widget build(BuildContext context) {

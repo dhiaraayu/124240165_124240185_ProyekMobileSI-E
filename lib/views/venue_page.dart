@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../controllers/venue_controller.dart';
 import '../models/venue_gate.dart';
 import '../widgets/motion.dart';
@@ -585,10 +584,7 @@ class VenuePage extends GetView<VenueController> {
   }
 }
 
-// ------------------------------------------------------
 // INTERACTIVE CIRCUIT MAP
-// ------------------------------------------------------
-
 class _CircuitMap extends StatefulWidget {
   final Function(VenueGate) onGateTap;
 
@@ -795,9 +791,7 @@ class _CircuitMapState extends State<_CircuitMap> {
   }
 }
 
-// ------------------------------------------------------
 // REMINDER BOTTOM SHEET
-// ------------------------------------------------------
 
 class ReminderSheet extends StatefulWidget {
   final VenueGate gate;

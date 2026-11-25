@@ -21,24 +21,24 @@ class LocalService {
   static Future<void> init() async {
     await Hive.initFlutter();
 
-    // Register Hive Adapters
+    
     if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(AppUserAdapter());
     if (!Hive.isAdapterRegistered(1))
       Hive.registerAdapter(TicketPackageAdapter());
     if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(OrderAdapter());
 
-    // Open Hive Boxes
+    
     usersBox = await Hive.openBox<AppUser>('usersBox');
     ticketsBox = await Hive.openBox<TicketPackage>('ticketsBox');
     ordersBox = await Hive.openBox<Order>('ordersBox');
     wishlistBox = await Hive.openBox<String>('wishlistBox');
     draftBox = await Hive.openBox<Order>('draftBox');
 
-    // Init SharedPreferences
+    
     prefs = await SharedPreferences.getInstance();
   }
 
-  // Session Management
+  
   static bool get isLoggedIn => prefs.getBool(keyIsLoggedIn) ?? false;
   static String? get currentUserId => prefs.getString(keyUserId);
   static String? get currentUserName => prefs.getString(keyUserName);

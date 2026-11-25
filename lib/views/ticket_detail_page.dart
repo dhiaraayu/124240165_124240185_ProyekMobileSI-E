@@ -51,7 +51,6 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
       return;
     }
 
-    // Guest flow: Buy -> Sign In / Register -> Checkout
     authCtrl.requireLogin(
       message: 'Please sign in or register to complete your booking.',
       onSuccess: () {

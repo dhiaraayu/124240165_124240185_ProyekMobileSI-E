@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../theme.dart';
 import '../widgets/onboarding_visual.dart';
 
@@ -24,11 +23,6 @@ class _OnboardData {
   });
 }
 
-/// Onboarding 3 halaman (swipe). Ditampilkan setiap kali app dibuka selama
-/// user belum login (lihat penentuan startRoute di main.dart).
-///
-/// Foto opsional: letakkan di assets/images/onboarding_1.jpg, onboarding_2.jpg
-/// dan onboarding_3.jpg. Jika tidak ada, ilustrasi bawaan dipakai.
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
@@ -310,8 +304,6 @@ class _OnboardPageView extends StatelessWidget {
   }
 }
 
-/// Ilustrasi e-ticket digital untuk halaman 3 (dibuat dengan widget,
-/// bukan data tiket sungguhan).
 class _TicketMock extends StatelessWidget {
   const _TicketMock();
 

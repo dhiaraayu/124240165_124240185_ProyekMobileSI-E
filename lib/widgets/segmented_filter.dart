@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../theme.dart';
 
 /// Filter berbentuk segmen dengan indikator merah yang meluncur.

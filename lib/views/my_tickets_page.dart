@@ -325,7 +325,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                           )),
                     ],
                   ),
-                  // Cancelled orders remain visible as history and cannot be edited.
+                  
                   if (!isCancelled) ...[
                     const SizedBox(height: 14),
                     Pressable(
@@ -435,7 +435,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
               ),
               const SizedBox(height: 16),
 
-              // Quantity is fixed after purchase; changing it requires a payment/refund flow.
+      
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -459,7 +459,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
               const SizedBox(height: 24),
 
-              // Save Changes Button (CRUD Update)
+              // (CRUD Update)
               AppButton(
                 text: 'Save Changes',
                 onPressed: () async {
@@ -486,7 +486,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
               const SizedBox(height: 10),
 
-              // E-ticket: tampilkan QR code
+              // E-ticket tampilkan QR code
               AppButton(
                 text: 'Lihat E-Ticket',
                 icon: Icons.qr_code_2_rounded,
@@ -500,7 +500,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
               const SizedBox(height: 6),
 
-              // Cancel Ticket Button (CRUD Delete)
+              // (CRUD Delete)
               SizedBox(
                 width: double.infinity,
                 height: 48,

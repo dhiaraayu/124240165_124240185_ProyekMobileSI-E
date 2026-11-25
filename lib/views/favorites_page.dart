@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../controllers/auth_controller.dart';
 import '../controllers/ticket_controller.dart';
 import '../controllers/currency_controller.dart';

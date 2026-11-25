@@ -5,7 +5,6 @@ class VenueGate {
   final double latitude;
   final double longitude;
 
-  // Marker positions relative to the original circuit map.
   final double mapX;
   final double mapY;
 

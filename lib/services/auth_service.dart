@@ -38,7 +38,7 @@ class AuthService {
   }
 
   /// Membuat akun baru dan menyimpannya ke Hive.
-  /// [autoLogin] = true -> langsung membuat sesi login.
+  /// [autoLogin] = true langsung membuat sesi login.
   Future<AppUser> register({
     required String name,
     required String email,

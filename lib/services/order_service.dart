@@ -35,7 +35,6 @@ class OrderService {
 
     await LocalService.ordersBox.put(id, order);
 
-    // Trigger immediate confirmation notification
     await DeviceService.showNow(
       id: notifId,
       title: 'Order Confirmed!',
@@ -43,8 +42,6 @@ class OrderService {
           '$quantity x $packageName ($attendance) has been booked successfully.',
     );
 
-    // Schedule race weekend reminders:
-    // Marina Bay 2027: Oct 8-10, 2027
     final raceDay = DateTime(2027, 10, 8, 9, 0);
     final reminderEve = raceDay.subtract(const Duration(days: 1));
     if (reminderEve.isAfter(DateTime.now())) {
@@ -63,7 +60,6 @@ class OrderService {
     return order;
   }
 
-  // READ (Filtered strictly by active userId for security & privacy)
   List<Order> getOrdersForUser(String userId) {
     return LocalService.ordersBox.values
         .where((order) => order.userId == userId)
@@ -71,7 +67,7 @@ class OrderService {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  // UPDATE (Update attendee name and quantity, recalculate total)
+
   Future<Order> updateOrder({
     required String orderId,
     required String newAttendeeName,
@@ -102,11 +98,11 @@ class OrderService {
   Future<void> cancelOrder(String orderId) async {
     final order = LocalService.ordersBox.get(orderId);
     if (order != null) {
-      // Cancel scheduled notifications for this order
+      
       await DeviceService.cancel(order.notifId);
       await DeviceService.cancel(order.notifId + 1);
 
-      // Keep the order in history and mark it as cancelled.
+     
       await LocalService.ordersBox.put(
         orderId,
         order.copyWith(status: 'cancelled'),

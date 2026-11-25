@@ -135,15 +135,15 @@ class DeviceService {
       await _notificationsPlugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: (response) {
-          // Handle notification click if needed
+          
         },
       );
 
-      // Permissions are requested only when the user explicitly enables a reminder.
+      
     } catch (_) {}
   }
 
-  // 1. Immediate Notification
+  
   static Future<void> showNow({
     required int id,
     required String title,
@@ -163,7 +163,7 @@ class DeviceService {
     } catch (_) {}
   }
 
-  // 2. Scheduled Notification
+  
   static Future<void> schedule({
     required int id,
     required String title,
@@ -208,7 +208,7 @@ class DeviceService {
     );
   }
 
-  // Demo: Test notification in 10 seconds
+  
   static Future<void> scheduleTest10Seconds({
     required int id,
     required String title,
@@ -223,14 +223,14 @@ class DeviceService {
     );
   }
 
-  // Cancel notification
+  
   static Future<void> cancel(int id) async {
     try {
       await _notificationsPlugin.cancel(id);
     } catch (_) {}
   }
 
-  // Cancel all notifications
+ 
   static Future<void> cancelAll() async {
     try {
       await _notificationsPlugin.cancelAll();

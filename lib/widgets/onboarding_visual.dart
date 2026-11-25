@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../theme.dart';
 
 /// Latar visual onboarding: mencoba memuat foto dari [assets] (berurutan),

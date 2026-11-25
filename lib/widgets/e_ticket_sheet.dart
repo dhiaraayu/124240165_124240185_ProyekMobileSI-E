@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-
 import '../models/order.dart';
 import '../theme.dart';
 
@@ -22,8 +21,8 @@ String eventDatesFor(String attendance) {
 String ticketQrData(Order order) =>
     'SGGP2027|${order.id}|${order.attendeeName}';
 
-/// Menampilkan e-ticket (seperti tiket akses di aplikasi kereta):
-/// QR code besar di layar.
+/// Menampilkan e-ticket
+/// QR code besar di layar
 void showETicket(BuildContext context, Order order) {
   showModalBottomSheet(
     context: context,

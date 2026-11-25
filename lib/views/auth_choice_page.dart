@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../theme.dart';
 import '../widgets/app_button.dart';
 import '../widgets/onboarding_visual.dart';
 
-/// Pilihan setelah onboarding: Login, Register, atau Continue as Guest.
-/// Semua tombol memakai halaman & mekanisme auth yang sudah ada (LoginPage +
-/// AuthController); Guest hanya membuka beranda tanpa membuat sesi/akun.
+
 class AuthChoicePage extends StatelessWidget {
   const AuthChoicePage({super.key});
 
